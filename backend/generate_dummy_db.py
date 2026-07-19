@@ -7,20 +7,17 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 from app.models.employee import Employee
 from app.models.attendance import AttendanceLog, DailyAttendance
 from app.services.attendance_processor import AttendanceProcessor
-from app.database.database import Base
-
-dummy_db_path = "c:/Users/kunwa/Desktop/ams/dummy.db"
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{dummy_db_path}"
-
-if os.path.exists(dummy_db_path):
-    os.remove(dummy_db_path)
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-Base.metadata.create_all(bind=engine)
+from app.database.database import Base, db_path, engine, SessionLocal
 
 def generate():
+    print(f"Using database path: {db_path}")
+    if os.path.exists(db_path):
+        os.remove(db_path)
+        print(f"Cleared existing database at {db_path}")
+
+    # Create tables
+    Base.metadata.create_all(bind=engine)
+
     db = SessionLocal()
     try:
         print("Seeding Employees...")
@@ -41,6 +38,25 @@ def generate():
             )
             db.add(emp)
             employees.append(emp)
+            
+        # Add special test cases for AI Alerts
+        emp_late_alert = Employee(
+            machine_user_id="9998",
+            full_name="AI Alert Test (3 Lates)",
+            department="QA",
+            designation="Tester",
+            status="Active"
+        )
+        emp_absent_alert = Employee(
+            machine_user_id="9999",
+            full_name="AI Alert Test (3 Absences)",
+            department="QA",
+            designation="Tester",
+            status="Active"
+        )
+        db.add(emp_late_alert)
+        db.add(emp_absent_alert)
+        employees.extend([emp_late_alert, emp_absent_alert])
         
         db.commit()
 
@@ -52,6 +68,10 @@ def generate():
             process_date = today - timedelta(days=day_offset)
             
             for emp in employees:
+                # Skip the AI test employees from random log generation, we will manually insert them later
+                if "AI Alert Test" in emp.full_name:
+                    continue
+                    
                 chance = 0.95
                 if "Frequent Absentee" in emp.full_name:
                     chance = 0.60
@@ -108,8 +128,21 @@ def generate():
         for day_offset in range(60):
             process_date = today - timedelta(days=day_offset)
             processor.process_daily_attendance(process_date)
+            
+        print("Injecting AI Alert Test Data...")
+        # For emp_late_alert: inject 3 late checkins in last 3 days (after 10:15 AM)
+        for i in range(1, 4):
+            date = today - timedelta(days=i)
+            late_checkin = datetime.combine(date, datetime.min.time()) + timedelta(hours=10, minutes=45)
+            db.add(DailyAttendance(employee_id=emp_late_alert.id, date=date, check_in=late_checkin, status="Present"))
+            
+        # For emp_absent_alert: inject 3 absences in last 3 days
+        for i in range(1, 4):
+            date = today - timedelta(days=i)
+            db.add(DailyAttendance(employee_id=emp_absent_alert.id, date=date, status="Absent"))
 
-        print(f"Seeding completed! Database saved to {dummy_db_path}")
+        db.commit()
+        print(f"Seeding completed! Database saved to {db_path}")
     finally:
         db.close()
 
