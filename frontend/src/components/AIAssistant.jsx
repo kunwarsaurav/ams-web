@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Send, Download, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import { useAI } from '../context/AIContext';
 
-const API_BASE = "http://127.0.0.1:8080";
+const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname || '127.0.0.1'}:8080`;
 
 export default function AIAssistant() {
   const { status, downloadProgress, installOllama } = useAI();

@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-const host = window.location.hostname || '127.0.0.1';
+const baseURL = import.meta.env.VITE_API_URL || `http://${window.location.hostname || '127.0.0.1'}:8080`;
 const api = axios.create({
-    baseURL: `http://${host}:8080`,
+    baseURL: baseURL,
     headers: {
         'Content-Type': 'application/json',
     },

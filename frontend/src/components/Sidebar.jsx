@@ -49,8 +49,8 @@ export default function Sidebar({ onLogout }) {
         <button 
           onClick={async () => {
             try {
-              const host = window.location.hostname || '127.0.0.1';
-              const response = await fetch(`http://${host}:8080/database/backup`);
+              const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname || '127.0.0.1'}:8080`;
+              const response = await fetch(`${baseUrl}/database/backup`);
               const blob = await response.blob();
               const url = window.URL.createObjectURL(blob);
               const link = document.createElement('a');

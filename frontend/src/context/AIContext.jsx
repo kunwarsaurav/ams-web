@@ -5,7 +5,7 @@ export const AIContext = createContext();
 export function AIProvider({ children }) {
   const [status, setStatus] = useState({ state: 'checking' }); // checking, setup, installing, downloading, ready
   const [downloadProgress, setDownloadProgress] = useState('');
-  const API_BASE = "http://127.0.0.1:8080";
+  const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname || '127.0.0.1'}:8080`;
 
   const checkStatus = async () => {
     try {
