@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, CalendarDays, Download, Settings as SettingsIcon, LogOut, Bot, Loader2 } from 'lucide-react';
+import { LayoutDashboard, Users, CalendarDays, Download, Settings as SettingsIcon, LogOut, Bot, Loader2, BellRing } from 'lucide-react';
 import { useAI } from '../context/AIContext';
 
 export default function Sidebar({ onLogout }) {
@@ -39,6 +39,10 @@ export default function Sidebar({ onLogout }) {
               Installing
             </div>
           )}
+        </NavLink>
+        <NavLink to="/alerts" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+          <BellRing size={20} />
+          AI Alerts
         </NavLink>
         <NavLink to="/settings" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <SettingsIcon size={20} />

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { User, KeyRound, CheckCircle2 } from 'lucide-react';
+import { User, KeyRound, CheckCircle2, Building, Mail, Save } from 'lucide-react';
+import { getDeviceSettings, updateDeviceSettings } from '../services/api';
 
 export default function Settings() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -8,6 +9,33 @@ export default function Settings() {
   
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  const [companyName, setCompanyName] = useState('');
+  const [hrEmail, setHrEmail] = useState('');
+  const [ipAddress, setIpAddress] = useState(''); // Keep existing IP config
+
+  React.useEffect(() => {
+    getDeviceSettings().then(res => {
+      setCompanyName(res.data.company_name || 'Synthbit Technologies');
+      setHrEmail(res.data.hr_email || 'hr@synthbit.com');
+      setIpAddress(res.data.ip_address || '10.10.10.10');
+    }).catch(err => console.error(err));
+  }, []);
+
+  const handleCompanySave = async (e) => {
+    e.preventDefault();
+    try {
+      await updateDeviceSettings({
+        company_name: companyName,
+        hr_email: hrEmail,
+        ip_address: ipAddress
+      });
+      setMessage('Company Profile saved successfully!');
+      setTimeout(() => setMessage(''), 3000);
+    } catch (err) {
+      setError('Failed to save Company Profile');
+    }
+  };
 
   const handlePasswordChange = (e) => {
     e.preventDefault();
@@ -68,6 +96,49 @@ export default function Settings() {
               <div style={{ display: 'inline-block', background: 'var(--primary)', color: 'white', padding: '4px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: '600' }}>Super Admin</div>
             </div>
           </div>
+        </div>
+
+        {/* Company Profile Card */}
+        <div className="card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+            <Building size={24} color="var(--primary)" />
+            <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '18px', textTransform: 'none' }}>Company Profile</h3>
+          </div>
+          <form onSubmit={handleCompanySave}>
+            <div className="form-group">
+              <label>Company Name</label>
+              <div style={{ position: 'relative' }}>
+                <Building size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input 
+                  type="text" 
+                  className="form-control"
+                  style={{ paddingLeft: '40px' }}
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
+                  placeholder="E.g. Synthbit Technologies"
+                  required
+                />
+              </div>
+            </div>
+            <div className="form-group" style={{ marginBottom: '24px' }}>
+              <label>HR Email Address</label>
+              <div style={{ position: 'relative' }}>
+                <Mail size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                <input 
+                  type="email" 
+                  className="form-control"
+                  style={{ paddingLeft: '40px' }}
+                  value={hrEmail}
+                  onChange={(e) => setHrEmail(e.target.value)}
+                  placeholder="hr@company.com"
+                  required
+                />
+              </div>
+            </div>
+            <button type="submit" className="btn btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+              <Save size={16} /> Save Profile
+            </button>
+          </form>
         </div>
 
         {/* Change Password Card */}

@@ -22,23 +22,37 @@ def get_device_settings(db: Session = Depends(get_db)):
         config = DeviceConfig(ip_address="10.10.10.10")
         db.add(config)
         db.commit()
-    return {"ip_address": config.ip_address}
+    return {
+        "ip_address": config.ip_address,
+        "company_name": config.company_name,
+        "hr_email": config.hr_email
+    }
 
 @router.post("/device/settings")
 async def update_device_settings(request: Request, db: Session = Depends(get_db)):
     data = await request.json()
     new_ip = data.get("ip_address")
+    company_name = data.get("company_name", "Synthbit Technologies")
+    hr_email = data.get("hr_email", "hr@synthbit.com")
+    
     if not new_ip:
         return JSONResponse(status_code=400, content={"message": "ip_address is required"})
     
     config = db.query(DeviceConfig).first()
     if not config:
-        config = DeviceConfig(ip_address=new_ip)
+        config = DeviceConfig(ip_address=new_ip, company_name=company_name, hr_email=hr_email)
         db.add(config)
     else:
         config.ip_address = new_ip
+        config.company_name = company_name
+        config.hr_email = hr_email
     db.commit()
-    return {"message": "Device settings updated", "ip_address": new_ip}
+    return {
+        "message": "Device settings updated", 
+        "ip_address": new_ip,
+        "company_name": company_name,
+        "hr_email": hr_email
+    }
 
 @router.get("/device/ping")
 def ping_device(db: Session = Depends(get_db)):

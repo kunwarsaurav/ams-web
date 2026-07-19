@@ -9,5 +9,6 @@ class Employee(Base):
     full_name = Column(String, index=True)
     department = Column(String, index=True)
     designation = Column(String)
+    email = Column(String, nullable=True)
     status = Column(String, default="Active")
     is_synced = Column(Integer, default=0) # 0 for False, 1 for True

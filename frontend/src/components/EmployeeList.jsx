@@ -13,6 +13,7 @@ export default function EmployeeList() {
   const [formData, setFormData] = useState({
     machine_user_id: '',
     full_name: '',
+    email: '',
     department: '',
     designation: '',
     status: 'Active'
@@ -56,6 +57,7 @@ export default function EmployeeList() {
     setFormData({
       machine_user_id: '',
       full_name: '',
+      email: '',
       department: '',
       designation: '',
       status: 'Active'
@@ -68,6 +70,7 @@ export default function EmployeeList() {
     setFormData({
       machine_user_id: emp.machine_user_id,
       full_name: emp.full_name,
+      email: emp.email || '',
       department: emp.department,
       designation: emp.designation,
       status: emp.status
@@ -126,6 +129,7 @@ export default function EmployeeList() {
               <tr>
                 <th>Machine ID</th>
                 <th>Name</th>
+                <th>Email</th>
                 <th>Department</th>
                 <th>Designation</th>
                 <th>Status</th>
@@ -137,6 +141,7 @@ export default function EmployeeList() {
                 <tr key={emp.id}>
                   <td>{emp.machine_user_id}</td>
                   <td>{emp.full_name}</td>
+                  <td>{emp.email || '-'}</td>
                   <td>{emp.department}</td>
                   <td>{emp.designation}</td>
                   <td>
@@ -161,7 +166,7 @@ export default function EmployeeList() {
               ))}
               {employees.length === 0 && (
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center' }}>No employees found</td>
+                  <td colSpan="7" style={{ textAlign: 'center' }}>No employees found</td>
                 </tr>
               )}
             </tbody>
@@ -186,6 +191,10 @@ export default function EmployeeList() {
               <div className="form-group">
                 <label>Machine User ID (Must be unique)</label>
                 <input required type="text" name="machine_user_id" className="form-control" value={formData.machine_user_id} onChange={handleInputChange} disabled={!!editingId} title={editingId ? "Machine ID cannot be changed" : ""} />
+              </div>
+              <div className="form-group">
+                <label>Email Address</label>
+                <input type="email" name="email" className="form-control" value={formData.email} onChange={handleInputChange} placeholder="Optional" />
               </div>
               <div className="form-group">
                 <label>Department</label>

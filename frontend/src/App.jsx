@@ -6,6 +6,7 @@ import EmployeeList from './components/EmployeeList';
 import AttendanceTable from './components/AttendanceTable';
 import Settings from './components/Settings';
 import AIAssistant from './components/AIAssistant';
+import AIAlerts from './components/AIAlerts';
 import Login from './components/Login';
 import { wsManager } from './services/websocket';
 import { AIProvider } from './context/AIContext';
@@ -36,6 +37,7 @@ export default function App() {
               <Route path="/employees" element={<EmployeeList />} />
               <Route path="/attendance" element={<AttendanceTable />} />
               <Route path="/ai" element={<AIAssistant />} />
+              <Route path="/alerts" element={<AIAlerts />} />
               <Route path="/settings" element={<Settings />} />
             </Routes>
           </main>

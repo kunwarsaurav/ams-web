@@ -6,6 +6,7 @@ class EmployeeBase(BaseModel):
     full_name: str
     department: str
     designation: str
+    email: Optional[str] = None
     status: Optional[str] = "Active"
     is_synced: Optional[int] = 0
 
