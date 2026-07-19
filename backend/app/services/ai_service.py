@@ -26,13 +26,10 @@ class AIService:
             return
 
         try:
-            # We use creationflags=subprocess.CREATE_NO_WINDOW to hide the console window on Windows
-            CREATE_NO_WINDOW = 0x08000000
             self.process = subprocess.Popen(
                 ["ollama", "serve"],
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                creationflags=CREATE_NO_WINDOW
+                stderr=subprocess.DEVNULL
             )
             logger.info("Ollama started successfully in the background.")
         except FileNotFoundError:
@@ -66,8 +63,7 @@ class AIService:
             result = subprocess.run(
                 ["ollama", "--version"],
                 stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                creationflags=0x08000000
+                stderr=subprocess.DEVNULL
             )
             return result.returncode == 0
         except FileNotFoundError:
@@ -81,11 +77,9 @@ class AIService:
                 urllib.request.urlretrieve(OLLAMA_INSTALLER_URL, installer_path)
             
             logger.info("Running Ollama installer silently...")
-            CREATE_NO_WINDOW = 0x08000000
             subprocess.run(
                 [installer_path, "/S", "/SILENT"],
-                check=True,
-                creationflags=CREATE_NO_WINDOW
+                check=True
             )
             logger.info("Ollama installation completed.")
             return True

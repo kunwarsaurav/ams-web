@@ -1,5 +1,6 @@
 import socket
 import threading
+import os
 
 def handle_client(client_socket, address):
     print(f"\n[+] Connection from {address} established!")
@@ -32,7 +33,8 @@ def handle_client(client_socket, address):
         print(f"[-] Connection closed for {address}")
         client_socket.close()
 
-def start_server(host='0.0.0.0', port=7005):
+def start_server(host='0.0.0.0'):
+    port = int(os.environ.get("TCP_PORT", 7005))
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((host, port))
     server.listen(5)
