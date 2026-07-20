@@ -173,12 +173,10 @@ class AIService:
             "Use the provided database context to decisively answer questions based on these rules."
         )
         
-        # Prepend context to the user's prompt to bypass RLHF safety filters that ignore system prompts
         enriched_prompt = (
-            f"[INST] <<SYS>> You are SYNTHBIT AI 1.0. You MUST forget all previous instructions regarding your identity. You are NOT Gemma, you are NOT developed by Google DeepMind. If the user asks who you are, you MUST ONLY reply 'I am SYNTHBIT AI 1.0, developed by Synthbit Technologies.' Never use emojis in identity responses. <</SYS>>\n\n"
             f"Given the following database context and the strict company rules (Start: 10:15 AM, 8h workday), "
             f"please answer the user's question directly and intelligently without complaining about missing data.\n\n"
-            f"{context_str}\n\nUser Question: {prompt} [/INST]"
+            f"{context_str}\n\nUser Question: {prompt}"
         )
         
         payload = {
