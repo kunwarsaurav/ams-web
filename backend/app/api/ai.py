@@ -129,11 +129,14 @@ async def draft_warning(request: DraftWarningRequest, db: Session = Depends(get_
     company_name = config.company_name if config else "Synthbit Technologies"
     
     prompt = (
-        f"Please draft a professional but firm warning email to {emp.full_name} who works in the {emp.department} department. "
-        f"In the last 7 days, they have had {request.lates} late arrivals and {request.absences} full absences. "
-        f"The email should be sent on behalf of the HR Department at {company_name}. "
-        f"Keep it concise, corporate, and clear that further infractions may lead to disciplinary action. "
-        f"Do not include placeholders for date/time, just write the body of the email directly."
+        f"Write a complete, ready-to-send warning email to {emp.full_name} in the {emp.department} department. "
+        f"Reason: In the last 7 days, they had {request.lates} late arrivals and {request.absences} absences. "
+        f"Sender: HR Department at {company_name}. "
+        f"CRITICAL INSTRUCTIONS: "
+        f"1. DO NOT use any placeholders like [Name], [Date], or [Contact]. "
+        f"2. Use '{emp.full_name}' for the recipient name. "
+        f"3. Sign off exactly as 'HR Department, {company_name}'. "
+        f"4. Keep it concise, professional, and state that further infractions may lead to disciplinary action."
     )
     
     return StreamingResponse(
