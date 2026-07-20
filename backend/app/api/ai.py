@@ -67,6 +67,8 @@ async def query_ai(request: QueryRequest):
     """Queries the AI and streams the generated response."""
     request.model = "qwen2.5:0.5b"
     if not ai_service_instance.is_ollama_running():
+        with open("ai_debug.log", "a") as f:
+            f.write(f"[{datetime.now()}] ERROR in query_ai: Ollama is not running\n")
         raise HTTPException(status_code=503, detail="Ollama is not running.")
         
     return StreamingResponse(
@@ -115,6 +117,8 @@ async def draft_warning(request: DraftWarningRequest, db: Session = Depends(get_
     """Drafts an email warning using the AI."""
     request.model = "qwen2.5:0.5b"
     if not ai_service_instance.is_ollama_running():
+        with open("ai_debug.log", "a") as f:
+            f.write(f"[{datetime.now()}] ERROR in draft_warning: Ollama is not running\n")
         raise HTTPException(status_code=503, detail="Ollama is not running.")
         
     emp = db.query(Employee).filter(Employee.id == request.employee_id).first()

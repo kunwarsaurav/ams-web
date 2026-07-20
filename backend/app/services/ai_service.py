@@ -203,6 +203,8 @@ class AIService:
                 yield line.decode("utf-8")
         except Exception as e:
             logger.error(f"Error generating response: {e}")
+            with open("ai_debug.log", "a") as f:
+                f.write(f"[{datetime.now()}] ERROR in generate_response: {str(e)}\n")
             yield json.dumps({"error": str(e), "done": True}) + "\n"
 
 ai_service_instance = AIService()
