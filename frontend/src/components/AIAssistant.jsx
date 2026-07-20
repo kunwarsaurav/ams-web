@@ -46,11 +46,14 @@ export default function AIAssistant() {
 
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
         
-        buffer += decoder.decode(value, { stream: true });
+        if (value) {
+          buffer += decoder.decode(value, { stream: true });
+        }
+        
         const lines = buffer.split('\n');
-        buffer = lines.pop(); // Keep the last incomplete line in the buffer
+        // If done, we process all lines including the last one without a newline
+        buffer = done ? "" : lines.pop(); 
         
         for (let line of lines) {
           if (!line.trim()) continue;
@@ -73,6 +76,8 @@ export default function AIAssistant() {
             }
           } catch(e) {}
         }
+        
+        if (done) break;
       }
     } catch (error) {
       console.error(error);

@@ -203,6 +203,6 @@ class AIService:
                 yield line.decode("utf-8")
         except Exception as e:
             logger.error(f"Error generating response: {e}")
-            yield json.dumps({"error": str(e), "done": True})
+            yield json.dumps({"error": str(e), "done": True}) + "\n"
 
 ai_service_instance = AIService()

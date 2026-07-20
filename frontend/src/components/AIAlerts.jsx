@@ -54,11 +54,14 @@ export default function AIAlerts() {
       let buffer = "";
       while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
         
-        buffer += decoder.decode(value, { stream: true });
+        if (value) {
+          buffer += decoder.decode(value, { stream: true });
+        }
+        
         const lines = buffer.split('\n');
-        buffer = lines.pop(); // Keep the last incomplete line in the buffer
+        // If done, we process all lines including the last one without a newline
+        buffer = done ? "" : lines.pop(); 
         
         for (const line of lines) {
           if (!line.trim()) continue;
@@ -81,6 +84,8 @@ export default function AIAlerts() {
             console.error("Error parsing stream chunk", e);
           }
         }
+        
+        if (done) break;
       }
     } catch (error) {
       console.error("Error generating draft", error);
