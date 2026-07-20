@@ -5,17 +5,12 @@ import { useAI } from '../context/AIContext';
 const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname || '127.0.0.1'}:8080`;
 
 export default function AIAssistant() {
-  const { status, downloadProgress, installOllama } = useAI();
-  const [messages, setMessages] = useState(() => {
-    const saved = sessionStorage.getItem('ai_chat_history');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const { status, downloadProgress, installOllama, messages, setMessages } = useAI();
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
-    sessionStorage.setItem('ai_chat_history', JSON.stringify(messages));
     if (chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }

@@ -3,8 +3,9 @@ import React, { createContext, useState, useEffect, useContext } from 'react';
 export const AIContext = createContext();
 
 export function AIProvider({ children }) {
-  const [status, setStatus] = useState({ state: 'checking' }); // checking, setup, installing, downloading, ready
+  const [status, setStatus] = useState({ state: 'checking' });
   const [downloadProgress, setDownloadProgress] = useState('');
+  const [messages, setMessages] = useState([]); // Moved from AIAssistant
   const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname || '127.0.0.1'}:8080`;
 
   const checkStatus = async () => {
@@ -85,7 +86,7 @@ export function AIProvider({ children }) {
   };
 
   return (
-    <AIContext.Provider value={{ status, downloadProgress, installOllama }}>
+    <AIContext.Provider value={{ status, downloadProgress, installOllama, messages, setMessages }}>
       {children}
     </AIContext.Provider>
   );
