@@ -50,6 +50,7 @@ app.add_middleware(
         "http://40.81.245.157",       # VPS Nginx/Port 80
         "http://40.81.245.157:5173",  # VPS Vite Dev
         "http://40.81.245.157:4173",  # VPS Vite Preview
+        "http://40.81.245.157:8000",  # VPS Frontend on port 8000!
         "http://40.81.245.157:8080"   # Direct backend
     ],
 
