@@ -66,6 +66,13 @@ export default function AIAssistant() {
                 newMessages[newMessages.length - 1].content = aiResponseText;
                 return newMessages;
               });
+            } else if (data.detail) {
+              aiResponseText += `\n**API Error**: ${typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)}`;
+              setMessages(prev => {
+                const newMessages = [...prev];
+                newMessages[newMessages.length - 1].content = aiResponseText;
+                return newMessages;
+              });
             } else if (data.response) {
               aiResponseText += data.response;
               setMessages(prev => {

@@ -51,6 +51,7 @@ export default function AIAlerts() {
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
 
+      let currentDraft = "";
       let buffer = "";
       while (true) {
         const { value, done } = await reader.read();
@@ -68,16 +69,14 @@ export default function AIAlerts() {
           try {
             const data = JSON.parse(line);
             if (data.error) {
+              setDrafts(prev => ({ ...prev, [emp.employee_id]: `Error: ${data.error}` }));
+            } else if (data.detail) {
+              setDrafts(prev => ({ ...prev, [emp.employee_id]: `API Error: ${typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail)}` }));
+            } else if (data.response) {
+              currentDraft += data.response;
               setDrafts(prev => ({
                 ...prev,
-                [emp.employee_id]: `Error: ${data.error}`
-              }));
-              break;
-            }
-            if (data.response) {
-              setDrafts(prev => ({
-                ...prev,
-                [emp.employee_id]: (prev[emp.employee_id] || '') + data.response
+                [emp.employee_id]: currentDraft
               }));
             }
           } catch (e) {
