@@ -44,7 +44,7 @@ export default function AIAlerts() {
           employee_id: emp.employee_id,
           lates: emp.lates,
           absences: emp.absences,
-          model: 'gemma2:2b'
+          model: 'qwen2.5:0.5b'
         })
       });
 

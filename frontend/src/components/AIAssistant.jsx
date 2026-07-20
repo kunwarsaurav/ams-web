@@ -34,7 +34,7 @@ export default function AIAssistant() {
       const res = await fetch(`${API_BASE}/ai/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: userMessage.content, model: status.model || 'gemma2:2b' })
+        body: JSON.stringify({ prompt: userMessage.content, model: status.model || 'qwen2.5:0.5b' })
       });
 
       const reader = res.body.getReader();
@@ -139,7 +139,7 @@ export default function AIAssistant() {
         <div className="glass-card setup-card text-center">
           <Loader2 className="animate-spin text-primary mx-auto mb-4" size={48} />
           <h2>Downloading Model</h2>
-          <p className="text-muted">Pulling required AI model (gemma2:2b)...</p>
+          <p className="text-muted">Pulling required AI model (qwen2.5:0.5b)...</p>
           {downloadProgress && (
             <div className="progress-text mt-4 p-2 bg-light rounded text-sm mb-4">
               {downloadProgress}
