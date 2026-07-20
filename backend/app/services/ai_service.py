@@ -162,7 +162,20 @@ class AIService:
                     check_out = r.check_out.strftime("%H:%M") if r.check_out else "None"
                     hours = round(r.working_hours, 1) if r.working_hours else 0.0
                     
-                    context_str += f"- {name} ({role} in {dept}) on {date_str}: {status}, IN: {check_in}, OUT: {check_out}, Hours: {hours}h\n"
+                    # Pre-calculate flags so the tiny AI model doesn't have to do the math
+                    flags = []
+                    if r.status == "Absent":
+                        flags.append("ABSENT")
+                    if r.check_in and r.check_in.strftime("%H:%M") > "10:15":
+                        flags.append("LATE")
+                    if r.status == "Present" and r.check_in and not r.check_out:
+                        flags.append("MISSED_CHECKOUT")
+                    if hours > 8.0:
+                        flags.append("OVERTIME")
+                        
+                    flags_str = f"[{', '.join(flags)}]" if flags else "[ON TIME/NORMAL]"
+                    
+                    context_str += f"- {name} ({role} in {dept}) on {date_str}: {status} {flags_str}, IN: {check_in}, OUT: {check_out}, Hours: {hours}h\n"
             except Exception as e:
                 logger.error(f"Failed to fetch DB context: {e}")
                 context_str += "(Failed to load database records)\n"
@@ -172,19 +185,16 @@ class AIService:
             system_prompt = (
                 "You are SYNTHBIT AI 1.0, a highly intelligent, proactive AI assistant for an Attendance Management System developed by Synthbit Technologies. "
                 "CRITICAL IDENTITY INSTRUCTION: If asked about your identity, what model you are, who created you, or anything related to AI models, you MUST reply that you are SYNTHBIT AI 1.0 developed by Synthbit Technologies. Never mention Gemma, Llama, OpenAI, Anthropic, Google, or any other underlying model architecture. "
-                "You help managers understand attendance data, company policies, and analyze shifts. "
-                "Always be concise, accurate, and highly analytical. Do not ask the user for more data if you can infer the answer. "
-                "Here are the absolute COMPANY RULES you MUST follow when answering:\n"
-                "1. Office Arrival Time: 10:15 AM. ANY check-in time strictly after 10:15 is considered LATE.\n"
-                "2. Missed Checkout: If an employee's status is 'Present' but their OUT time is 'None', they MISSED their checkout.\n"
-                "3. Overtime: Standard working hours are 8 hours. Anything above 8.0h is overtime.\n"
-                "4. Absences: If status is 'Absent', they did not come to work.\n"
-                "Use the provided database context to decisively answer questions based on these rules."
+                "You help managers understand attendance data. Always be concise, accurate, and highly analytical.\n\n"
+                "CRITICAL RULES FOR ANSWERING:\n"
+                "1. DO NOT guess or calculate who is late, who missed checkout, or who is absent. I have already calculated this for you in the context provided.\n"
+                "2. Simply look at the flags next to the employee's name. The flags will say [LATE], [ABSENT], [MISSED_CHECKOUT], [OVERTIME], or [ON TIME/NORMAL].\n"
+                "3. If a user asks 'who is late', ONLY list employees who have the [LATE] flag.\n"
+                "4. Be brief. List the names clearly."
             )
             
             enriched_prompt = (
-                f"Given the following database context and the strict company rules (Start: 10:15 AM, 8h workday), "
-                f"please answer the user's question directly and intelligently without complaining about missing data.\n\n"
+                f"Given the following database context, please answer the user's question directly and intelligently based ONLY on the flags provided next to each record.\n\n"
                 f"{context_str}\n\nUser Question: {prompt}"
             )
         else:
