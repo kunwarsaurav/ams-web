@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { User, KeyRound, CheckCircle2, Building, Mail, Save } from 'lucide-react';
 import { getDeviceSettings, updateDeviceSettings } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function Settings() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -11,6 +12,7 @@ export default function Settings() {
   const [pwdError, setPwdError] = useState('');
   const [profileMessage, setProfileMessage] = useState('');
   const [profileError, setProfileError] = useState('');
+  const { login } = useAuth();
 
   const [companyName, setCompanyName] = useState('');
   const [hrEmail, setHrEmail] = useState('');
@@ -40,17 +42,10 @@ export default function Settings() {
     }
   };
 
-  const handlePasswordChange = (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
     setPwdError('');
     setPwdMessage('');
-
-    const actualCurrentPassword = localStorage.getItem('adminPassword') || 'admin123';
-
-    if (currentPassword !== actualCurrentPassword) {
-      setPwdError('Current password is incorrect');
-      return;
-    }
 
     if (newPassword !== confirmPassword) {
       setPwdError('New passwords do not match');
@@ -62,14 +57,30 @@ export default function Settings() {
       return;
     }
 
-    localStorage.setItem('adminPassword', newPassword);
-    setPwdMessage('Password changed successfully!');
-    setTimeout(() => setPwdMessage(''), 3000);
-    
-    // Reset form
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
+    try {
+      // Verify current password by trying to log in
+      await login('admin', currentPassword);
+      
+      await updateDeviceSettings({
+        company_name: companyName,
+        hr_email: hrEmail,
+        ip_address: ipAddress,
+        admin_password: newPassword
+      });
+      
+      // Cleanup old local storage if exists
+      localStorage.removeItem('adminPassword');
+      
+      setPwdMessage('Password changed successfully!');
+      setTimeout(() => setPwdMessage(''), 3000);
+      
+      // Reset form
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      setPwdError('Current password is incorrect');
+    }
   };
 
   return (

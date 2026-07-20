@@ -3,10 +3,16 @@ import axios from 'axios';
 const baseURL = import.meta.env.VITE_API_URL || `http://${window.location.hostname || '127.0.0.1'}:8080`;
 const api = axios.create({
     baseURL: baseURL,
+    withCredentials: true, // Send cookies automatically
     headers: {
         'Content-Type': 'application/json',
     },
 });
+
+// Auth
+export const login = (username, password) => api.post('/auth/login', { username, password });
+export const logout = () => api.post('/auth/logout');
+export const verifySession = () => api.get('/auth/me');
 
 // Employees
 export const getEmployees = () => api.get('/employees');

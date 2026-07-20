@@ -34,6 +34,7 @@ async def update_device_settings(request: Request, db: Session = Depends(get_db)
     new_ip = data.get("ip_address")
     company_name = data.get("company_name", "Synthbit Technologies")
     hr_email = data.get("hr_email", "hr@synthbit.com")
+    admin_password = data.get("admin_password")
     
     if not new_ip:
         return JSONResponse(status_code=400, content={"message": "ip_address is required"})
@@ -41,11 +42,15 @@ async def update_device_settings(request: Request, db: Session = Depends(get_db)
     config = db.query(DeviceConfig).first()
     if not config:
         config = DeviceConfig(ip_address=new_ip, company_name=company_name, hr_email=hr_email)
+        if admin_password:
+            config.admin_password = admin_password
         db.add(config)
     else:
         config.ip_address = new_ip
         config.company_name = company_name
         config.hr_email = hr_email
+        if admin_password:
+            config.admin_password = admin_password
     db.commit()
     return {
         "message": "Device settings updated", 

@@ -2,7 +2,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from app.database.database import engine, Base, db_path
-from app.api import employees, attendance, device, ai
+from app.api import employees, attendance, device, ai, auth
 from app.models import config # To ensure it's registered
 from app.websocket_manager import manager
 from app.services.ai_service import ai_service_instance
@@ -25,7 +25,7 @@ app = FastAPI(title="Attendance Management System API", lifespan=lifespan)
 # Configure CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # In production, restrict this
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://40.81.245.157"], # Explicit origins required for credentials
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,6 +35,7 @@ app.include_router(employees.router)
 app.include_router(attendance.router)
 app.include_router(device.router)
 app.include_router(ai.router, prefix="/ai", tags=["AI"])
+app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):

@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
 import { Lock, User } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
-export default function Login({ onLogin }) {
+export default function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const currentPassword = localStorage.getItem('adminPassword') || 'admin123';
-    
-    if (username === 'admin' && password === currentPassword) {
-      onLogin();
-    } else {
+    try {
+      await login(username, password);
+    } catch (err) {
       setError('Invalid username or password');
     }
   };
