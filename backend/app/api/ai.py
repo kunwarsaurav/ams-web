@@ -65,6 +65,7 @@ async def pull_model(request: PullRequest):
 @router.post("/query")
 async def query_ai(request: QueryRequest):
     """Queries the AI and streams the generated response."""
+    request.model = "qwen2.5:0.5b"
     if not ai_service_instance.is_ollama_running():
         raise HTTPException(status_code=503, detail="Ollama is not running.")
         
@@ -112,6 +113,7 @@ def get_ai_alerts(db: Session = Depends(get_db)):
 @router.post("/draft-warning")
 async def draft_warning(request: DraftWarningRequest, db: Session = Depends(get_db)):
     """Drafts an email warning using the AI."""
+    request.model = "qwen2.5:0.5b"
     if not ai_service_instance.is_ollama_running():
         raise HTTPException(status_code=503, detail="Ollama is not running.")
         

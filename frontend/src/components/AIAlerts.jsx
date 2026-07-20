@@ -61,6 +61,13 @@ export default function AIAlerts() {
         for (const line of lines) {
           try {
             const data = JSON.parse(line);
+            if (data.error) {
+              setDrafts(prev => ({
+                ...prev,
+                [emp.employee_id]: `Error: ${data.error}`
+              }));
+              break;
+            }
             if (data.response) {
               setDrafts(prev => ({
                 ...prev,
