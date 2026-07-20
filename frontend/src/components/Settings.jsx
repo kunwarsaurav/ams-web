@@ -7,8 +7,10 @@ export default function Settings() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [pwdMessage, setPwdMessage] = useState('');
+  const [pwdError, setPwdError] = useState('');
+  const [profileMessage, setProfileMessage] = useState('');
+  const [profileError, setProfileError] = useState('');
 
   const [companyName, setCompanyName] = useState('');
   const [hrEmail, setHrEmail] = useState('');
@@ -30,37 +32,39 @@ export default function Settings() {
         hr_email: hrEmail,
         ip_address: ipAddress
       });
-      setMessage('Company Profile saved successfully!');
-      setTimeout(() => setMessage(''), 3000);
+      setProfileMessage('Company Profile saved successfully!');
+      setTimeout(() => setProfileMessage(''), 3000);
     } catch (err) {
-      setError('Failed to save Company Profile');
+      setProfileError('Failed to save Company Profile');
+      setTimeout(() => setProfileError(''), 3000);
     }
   };
 
   const handlePasswordChange = (e) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
+    setPwdError('');
+    setPwdMessage('');
 
     const actualCurrentPassword = localStorage.getItem('adminPassword') || 'admin123';
 
     if (currentPassword !== actualCurrentPassword) {
-      setError('Current password is incorrect');
+      setPwdError('Current password is incorrect');
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError('New passwords do not match');
+      setPwdError('New passwords do not match');
       return;
     }
 
     if (newPassword.length < 6) {
-      setError('New password must be at least 6 characters');
+      setPwdError('New password must be at least 6 characters');
       return;
     }
 
     localStorage.setItem('adminPassword', newPassword);
-    setMessage('Password changed successfully!');
+    setPwdMessage('Password changed successfully!');
+    setTimeout(() => setPwdMessage(''), 3000);
     
     // Reset form
     setCurrentPassword('');
@@ -104,6 +108,20 @@ export default function Settings() {
             <Building size={24} color="var(--primary)" />
             <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '18px', textTransform: 'none' }}>Company Profile</h3>
           </div>
+
+          {profileError && (
+            <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '12px', borderRadius: '8px', marginBottom: '20px', fontSize: '14px', fontWeight: '500' }}>
+              {profileError}
+            </div>
+          )}
+
+          {profileMessage && (
+            <div style={{ background: '#d1fae5', color: '#047857', padding: '12px', borderRadius: '8px', marginBottom: '20px', fontSize: '14px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <CheckCircle2 size={18} />
+              {profileMessage}
+            </div>
+          )}
+
           <form onSubmit={handleCompanySave}>
             <div className="form-group">
               <label>Company Name</label>
@@ -148,16 +166,16 @@ export default function Settings() {
             <h3 style={{ margin: 0, color: 'var(--text-main)', fontSize: '18px', textTransform: 'none' }}>Change Password</h3>
           </div>
 
-          {error && (
+          {pwdError && (
             <div style={{ background: '#fee2e2', color: '#b91c1c', padding: '12px', borderRadius: '8px', marginBottom: '20px', fontSize: '14px', fontWeight: '500' }}>
-              {error}
+              {pwdError}
             </div>
           )}
 
-          {message && (
+          {pwdMessage && (
             <div style={{ background: '#d1fae5', color: '#047857', padding: '12px', borderRadius: '8px', marginBottom: '20px', fontSize: '14px', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <CheckCircle2 size={18} />
-              {message}
+              {pwdMessage}
             </div>
           )}
 
