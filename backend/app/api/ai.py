@@ -22,6 +22,8 @@ class DraftWarningRequest(BaseModel):
     employee_id: int
     lates: int
     absences: int
+    start_date: str
+    end_date: str
     model: str = "qwen2.5:0.5b"
 
 @router.get("/status")
@@ -77,9 +79,11 @@ async def query_ai(request: QueryRequest):
     )
 
 @router.get("/alerts")
-def get_ai_alerts(db: Session = Depends(get_db)):
-    """Returns employees who have been late or absent >= 3 times in the last 7 days."""
-    recent_date = datetime.now().date() - timedelta(days=7)
+def get_ai_alerts(weeks_ago: int = 0, db: Session = Depends(get_db)):
+    """Returns employees who have been late or absent >= 3 times in a specific 7-day window."""
+    # Compute the date window
+    end_date = datetime.now().date() - timedelta(days=weeks_ago * 7)
+    start_date = end_date - timedelta(days=7)
     
     # Get all employees
     employees = db.query(Employee).filter(Employee.status != "Deleted").all()
@@ -88,7 +92,8 @@ def get_ai_alerts(db: Session = Depends(get_db)):
     for emp in employees:
         records = db.query(DailyAttendance).filter(
             DailyAttendance.employee_id == emp.id,
-            DailyAttendance.date >= recent_date
+            DailyAttendance.date >= start_date,
+            DailyAttendance.date < end_date
         ).all()
         
         lates = 0
@@ -110,7 +115,11 @@ def get_ai_alerts(db: Session = Depends(get_db)):
                 "absences": absences
             })
             
-    return {"alerts": alerts}
+    return {
+        "start_date": start_date.strftime("%Y-%m-%d"),
+        "end_date": end_date.strftime("%Y-%m-%d"),
+        "alerts": alerts
+    }
 
 @router.post("/draft-warning")
 async def draft_warning(request: DraftWarningRequest, db: Session = Depends(get_db)):
@@ -135,7 +144,7 @@ async def draft_warning(request: DraftWarningRequest, db: Session = Depends(get_
     template = (
         f"Subject: Official Attendance Warning\n\n"
         f"Dear {clean_name},\n\n"
-        f"We are writing to officially address your recent attendance. According to our records over the last 7 days, "
+        f"We are writing to officially address your recent attendance. According to our records from {request.start_date} to {request.end_date}, "
         f"you have had {issues_str}. This level of absenteeism is unacceptable and disrupts the team's workflow.\n\n"
         f"Please consider this a formal warning. We expect immediate improvement in your attendance and punctuality. "
         f"Be advised that any further infractions may lead to severe disciplinary action.\n\n"

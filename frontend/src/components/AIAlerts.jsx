@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getAIAlerts } from '../services/api';
-import { BellRing, Send, Bot, Mail } from 'lucide-react';
+import { BellRing, Send, Bot, Mail, CheckCircle } from 'lucide-react';
 import { useAI } from '../context/AIContext';
 import ReactMarkdown from 'react-markdown';
 
@@ -9,17 +9,24 @@ export default function AIAlerts() {
   const [loading, setLoading] = useState(true);
   const [draftingId, setDraftingId] = useState(null);
   const [drafts, setDrafts] = useState({});
+  const [weeksAgo, setWeeksAgo] = useState(0);
+  const [dateRange, setDateRange] = useState({ start: '', end: '' });
+  const [sentAlerts, setSentAlerts] = useState(() => {
+    const saved = localStorage.getItem('ai_sent_alerts');
+    return saved ? JSON.parse(saved) : {};
+  });
   const { status } = useAI();
 
   useEffect(() => {
-    fetchAlerts();
-  }, []);
+    fetchAlerts(weeksAgo);
+  }, [weeksAgo]);
 
-  const fetchAlerts = async () => {
+  const fetchAlerts = async (weeks) => {
     setLoading(true);
     try {
-      const res = await getAIAlerts();
+      const res = await getAIAlerts(weeks);
       setAlerts(res.data.alerts || []);
+      setDateRange({ start: res.data.start_date, end: res.data.end_date });
     } catch (err) {
       console.error("Failed to fetch alerts", err);
     }
@@ -44,6 +51,8 @@ export default function AIAlerts() {
           employee_id: emp.employee_id,
           lates: emp.lates,
           absences: emp.absences,
+          start_date: dateRange.start,
+          end_date: dateRange.end,
           model: 'qwen2.5:0.5b'
         })
       });
@@ -111,12 +120,47 @@ export default function AIAlerts() {
     window.location.href = `mailto:${emp.email}?subject=${subject}&body=${body}`;
   };
 
+  const toggleSent = (empId) => {
+    setSentAlerts(prev => {
+      const newSent = { ...prev };
+      const key = `${empId}_${dateRange.start}`;
+      if (newSent[key]) {
+        delete newSent[key];
+      } else {
+        newSent[key] = true;
+      }
+      localStorage.setItem('ai_sent_alerts', JSON.stringify(newSent));
+      return newSent;
+    });
+  };
+
+  const isSent = (empId) => {
+    return sentAlerts[`${empId}_${dateRange.start}`];
+  };
+
   return (
     <div className="alerts-page">
-      <div className="page-header">
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h2 className="page-title">AI Alerts</h2>
-          <p className="page-subtitle">Auto-generated warnings for frequent lates and absences (Last 7 Days)</p>
+          <p className="page-subtitle">
+            Auto-generated warnings for frequent lates and absences 
+            {dateRange.start && dateRange.end ? ` (${dateRange.start} to ${dateRange.end})` : ''}
+          </p>
+        </div>
+        <div>
+          <select 
+            className="form-control" 
+            style={{ width: '220px', padding: '10px', borderRadius: '8px', border: '1px solid var(--surface-border)', background: 'var(--surface)', color: 'var(--text-main)', outline: 'none' }}
+            value={weeksAgo}
+            onChange={(e) => setWeeksAgo(Number(e.target.value))}
+          >
+            <option value={0}>Current (Last 7 Days)</option>
+            <option value={1}>1 Week Ago</option>
+            <option value={2}>2 Weeks Ago</option>
+            <option value={3}>3 Weeks Ago</option>
+            <option value={4}>4 Weeks Ago</option>
+          </select>
         </div>
       </div>
 
@@ -134,7 +178,10 @@ export default function AIAlerts() {
             <div key={alert.employee_id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--text-main)' }}>{alert.full_name}</h3>
+                  <h3 style={{ margin: 0, fontSize: '18px', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {alert.full_name}
+                    {isSent(alert.employee_id) && <CheckCircle size={18} color="var(--success)" />}
+                  </h3>
                   <div style={{ fontSize: '14px', color: 'var(--text-muted)', marginTop: '4px' }}>
                     {alert.department} &bull; {alert.email || <span style={{ color: 'var(--danger)' }}>No Email Set</span>}
                   </div>
@@ -165,15 +212,23 @@ export default function AIAlerts() {
 
               {drafts[alert.employee_id] && (
                 <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', overflow: 'hidden' }}>
-                  <div style={{ background: '#f1f5f9', padding: '10px 16px', borderBottom: '1px solid #e2e8f0', fontSize: '14px', fontWeight: '600', color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ background: '#f1f5f9', padding: '10px 16px', borderBottom: '1px solid #e2e8f0', fontSize: '14px', fontWeight: '600', color: '#475569', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                     <div>Email Draft</div>
-                    <button 
-                      className="btn btn-primary" 
-                      style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', gap: '6px', alignItems: 'center' }}
-                      onClick={() => handleSendEmail(alert)}
-                    >
-                      <Send size={14} /> Send via Email App
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', gap: '6px', alignItems: 'center', background: isSent(alert.employee_id) ? '#10b981' : 'transparent', color: isSent(alert.employee_id) ? 'white' : '#64748b', border: isSent(alert.employee_id) ? 'none' : '1px solid #cbd5e1', borderRadius: '6px', cursor: 'pointer' }}
+                        onClick={() => toggleSent(alert.employee_id)}
+                      >
+                        <CheckCircle size={14} /> {isSent(alert.employee_id) ? 'Sent' : 'Mark as Sent'}
+                      </button>
+                      <button 
+                        className="btn btn-primary" 
+                        style={{ padding: '6px 12px', fontSize: '13px', display: 'flex', gap: '6px', alignItems: 'center' }}
+                        onClick={() => handleSendEmail(alert)}
+                      >
+                        <Send size={14} /> Send via Email App
+                      </button>
+                    </div>
                   </div>
                   <div style={{ padding: '16px', fontSize: '14px', color: '#334155', whiteSpace: 'pre-wrap', lineHeight: '1.6' }}>
                     <ReactMarkdown>{drafts[alert.employee_id]}</ReactMarkdown>

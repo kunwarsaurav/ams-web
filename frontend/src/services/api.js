@@ -30,6 +30,6 @@ export const getDeviceSettings = () => api.get('/device/settings');
 export const updateDeviceSettings = (data) => api.post('/device/settings', data);
 
 // AI
-export const getAIAlerts = () => api.get('/ai/alerts');
+export const getAIAlerts = (weeksAgo = 0) => api.get('/ai/alerts', { params: { weeks_ago: weeksAgo } });
 
 export default api;
