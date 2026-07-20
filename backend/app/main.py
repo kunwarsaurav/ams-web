@@ -7,12 +7,31 @@ from app.models import config # To ensure it's registered
 from app.websocket_manager import manager
 from app.services.ai_service import ai_service_instance
 from contextlib import asynccontextmanager
+import sqlite3
+
+def check_and_migrate_db():
+    try:
+        conn = sqlite3.connect(db_path)
+        # Check if table exists first
+        tables = [row[0] for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
+        if "device_config" in tables:
+            columns = [row[1] for row in conn.execute("PRAGMA table_info(device_config)").fetchall()]
+            if "admin_password" not in columns:
+                conn.execute("ALTER TABLE device_config ADD COLUMN admin_password VARCHAR DEFAULT 'admin123'")
+                conn.commit()
+                print("Database Migration: Added 'admin_password' column to device_config.")
+        conn.close()
+    except Exception as e:
+        print(f"Database Migration Error: {e}")
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Run migrations
+    check_and_migrate_db()
+    
     # Startup: Start Ollama if it's installed
     if ai_service_instance.is_ollama_installed():
         ai_service_instance.start_ollama()
@@ -25,7 +44,15 @@ app = FastAPI(title="Attendance Management System API", lifespan=lifespan)
 # Configure CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://40.81.245.157"], # Explicit origins required for credentials
+    allow_origins=[
+        "http://localhost:5173", 
+        "http://127.0.0.1:5173",
+        "http://40.81.245.157",       # VPS Nginx/Port 80
+        "http://40.81.245.157:5173",  # VPS Vite Dev
+        "http://40.81.245.157:4173",  # VPS Vite Preview
+        "http://40.81.245.157:8080"   # Direct backend
+    ],
+
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
