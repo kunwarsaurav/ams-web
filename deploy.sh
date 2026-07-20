@@ -1,20 +1,21 @@
 #!/bin/bash
 echo "🚀 Starting deployment..."
 
-# 1. Pull latest code from GitHub
 echo "📥 Pulling latest code..."
 git pull origin main
 
-# 2. Build the frontend
 echo "🏗️ Building frontend..."
 cd frontend
 npm install
 npm run build
 cd ..
 
-# 3. Restart the backend service
-# (Uncomment the line below if you have a systemd service set up for your backend)
-# echo "🔄 Restarting backend..."
-# sudo systemctl restart ams-backend
+echo "🔄 Restarting backend..."
+# Kill any existing python backend process
+pkill -f "python run.py" || true
+# Start the backend in the background
+cd backend
+nohup venv/bin/python run.py > backend.log 2>&1 &
+cd ..
 
 echo "✅ Deployment completed successfully!"
