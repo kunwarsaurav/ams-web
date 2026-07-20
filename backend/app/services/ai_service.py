@@ -119,65 +119,76 @@ class AIService:
             logger.error(f"Error pulling model: {e}")
             yield json.dumps({"error": str(e)})
 
-    async def generate_response(self, prompt: str, model_name: str = "qwen2.5:0.5b") -> AsyncGenerator[str, None]:
+    async def generate_response(self, prompt: str, model_name: str = "qwen2.5:0.5b", is_draft: bool = False) -> AsyncGenerator[str, None]:
         """Generates a response from the model based on the prompt, streaming the result."""
+        if not self.is_ollama_running():
+            yield json.dumps({"error": "Ollama is not running.", "done": True}) + "\n"
+            return
+            
         url = f"{OLLAMA_URL}/api/generate"
         
-        # Build context from the database
-        db = SessionLocal()
-        context_str = "Recent Attendance Data (Last 7 Days):\n"
-        try:
-            # Only fetch the last 7 days to prevent context window overflow with many employees
-            recent_date = datetime.now().date() - timedelta(days=7)
-            # Cap at 250 records max (approx 6,500 tokens) to guarantee it fits in an 8K context window
-            records = db.query(DailyAttendance).filter(DailyAttendance.date >= recent_date).order_by(DailyAttendance.date.desc()).limit(250).all()
+        context_str = ""
+        system_prompt = ""
+        enriched_prompt = prompt
+
+        if not is_draft:
+            # Build context from the database
+            db = SessionLocal()
+            context_str = "Recent Attendance Data (Last 7 Days):\n"
+            try:
+                # Only fetch the last 7 days to prevent context window overflow with many employees
+                recent_date = datetime.now().date() - timedelta(days=7)
+                # Cap at 250 records max (approx 6,500 tokens) to guarantee it fits in an 8K context window
+                records = db.query(DailyAttendance).filter(DailyAttendance.date >= recent_date).order_by(DailyAttendance.date.desc()).limit(250).all()
+                
+                # Group by employee for a cleaner prompt
+                emp_map = {}
+                for emp in db.query(Employee).all():
+                    emp_map[emp.id] = {
+                        "name": emp.full_name,
+                        "dept": emp.department,
+                        "role": emp.role
+                    }
+                
+                for r in records:
+                    emp_info = emp_map.get(r.employee_id, {"name": "Unknown", "dept": "Unknown", "role": "Unknown"})
+                    name = emp_info["name"]
+                    dept = emp_info["dept"]
+                    role = emp_info["role"]
+                    
+                    date_str = r.date.strftime("%Y-%m-%d") if r.date else "Unknown"
+                    status = r.status
+                    check_in = r.check_in.strftime("%H:%M") if r.check_in else "None"
+                    check_out = r.check_out.strftime("%H:%M") if r.check_out else "None"
+                    hours = round(r.working_hours, 1) if r.working_hours else 0.0
+                    
+                    context_str += f"- {name} ({role} in {dept}) on {date_str}: {status}, IN: {check_in}, OUT: {check_out}, Hours: {hours}h\n"
+            except Exception as e:
+                logger.error(f"Failed to fetch DB context: {e}")
+                context_str += "(Failed to load database records)\n"
+            finally:
+                db.close()
             
-            # Group by employee for a cleaner prompt
-            emp_map = {}
-            for emp in db.query(Employee).all():
-                emp_map[emp.id] = {
-                    "name": emp.full_name,
-                    "dept": emp.department or "Unknown",
-                    "role": emp.designation or "Employee"
-                }
-                
-            for r in records:
-                emp_data = emp_map.get(r.employee_id, {"name": "Unknown", "dept": "Unknown", "role": "Employee"})
-                name = emp_data["name"]
-                dept = emp_data["dept"]
-                role = emp_data["role"]
-                
-                date_str = r.date.strftime("%Y-%m-%d") if r.date else "Unknown"
-                status = r.status
-                check_in = r.check_in.strftime("%H:%M") if r.check_in else "None"
-                check_out = r.check_out.strftime("%H:%M") if r.check_out else "None"
-                hours = round(r.working_hours, 1) if r.working_hours else 0.0
-                
-                context_str += f"- {name} ({role} in {dept}) on {date_str}: {status}, IN: {check_in}, OUT: {check_out}, Hours: {hours}h\n"
-        except Exception as e:
-            logger.error(f"Failed to fetch DB context: {e}")
-            context_str += "(Failed to load database records)\n"
-        finally:
-            db.close()
-        
-        system_prompt = (
-            "You are SYNTHBIT AI 1.0, a highly intelligent, proactive AI assistant for an Attendance Management System developed by Synthbit Technologies. "
-            "CRITICAL IDENTITY INSTRUCTION: If asked about your identity, what model you are, who created you, or anything related to AI models, you MUST reply that you are SYNTHBIT AI 1.0 developed by Synthbit Technologies. Never mention Gemma, Llama, OpenAI, Anthropic, Google, or any other underlying model architecture. "
-            "You help managers understand attendance data, company policies, and analyze shifts. "
-            "Always be concise, accurate, and highly analytical. Do not ask the user for more data if you can infer the answer. "
-            "Here are the absolute COMPANY RULES you MUST follow when answering:\n"
-            "1. Office Arrival Time: 10:15 AM. ANY check-in time strictly after 10:15 is considered LATE.\n"
-            "2. Missed Checkout: If an employee's status is 'Present' but their OUT time is 'None', they MISSED their checkout.\n"
-            "3. Overtime: Standard working hours are 8 hours. Anything above 8.0h is overtime.\n"
-            "4. Absences: If status is 'Absent', they did not come to work.\n"
-            "Use the provided database context to decisively answer questions based on these rules."
-        )
-        
-        enriched_prompt = (
-            f"Given the following database context and the strict company rules (Start: 10:15 AM, 8h workday), "
-            f"please answer the user's question directly and intelligently without complaining about missing data.\n\n"
-            f"{context_str}\n\nUser Question: {prompt}"
-        )
+            system_prompt = (
+                "You are SYNTHBIT AI 1.0, a highly intelligent, proactive AI assistant for an Attendance Management System developed by Synthbit Technologies. "
+                "CRITICAL IDENTITY INSTRUCTION: If asked about your identity, what model you are, who created you, or anything related to AI models, you MUST reply that you are SYNTHBIT AI 1.0 developed by Synthbit Technologies. Never mention Gemma, Llama, OpenAI, Anthropic, Google, or any other underlying model architecture. "
+                "You help managers understand attendance data, company policies, and analyze shifts. "
+                "Always be concise, accurate, and highly analytical. Do not ask the user for more data if you can infer the answer. "
+                "Here are the absolute COMPANY RULES you MUST follow when answering:\n"
+                "1. Office Arrival Time: 10:15 AM. ANY check-in time strictly after 10:15 is considered LATE.\n"
+                "2. Missed Checkout: If an employee's status is 'Present' but their OUT time is 'None', they MISSED their checkout.\n"
+                "3. Overtime: Standard working hours are 8 hours. Anything above 8.0h is overtime.\n"
+                "4. Absences: If status is 'Absent', they did not come to work.\n"
+                "Use the provided database context to decisively answer questions based on these rules."
+            )
+            
+            enriched_prompt = (
+                f"Given the following database context and the strict company rules (Start: 10:15 AM, 8h workday), "
+                f"please answer the user's question directly and intelligently without complaining about missing data.\n\n"
+                f"{context_str}\n\nUser Question: {prompt}"
+            )
+        else:
+            system_prompt = "You are an AI that writes complete emails exactly as instructed. You never use placeholders."
         
         payload = {
             "model": model_name,

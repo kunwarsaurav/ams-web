@@ -140,6 +140,6 @@ async def draft_warning(request: DraftWarningRequest, db: Session = Depends(get_
     )
     
     return StreamingResponse(
-        ai_service_instance.generate_response(prompt, request.model),
+        ai_service_instance.generate_response(prompt, request.model, is_draft=True),
         media_type="application/x-ndjson"
     )
