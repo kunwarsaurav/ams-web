@@ -65,7 +65,7 @@ async def pull_model(request: PullRequest):
 @router.post("/query")
 async def query_ai(request: QueryRequest):
     """Queries the AI and streams the generated response."""
-    request.model = "qwen2.5:0.5b"
+    request.model = "qwen2.5:1.5b"
     if not ai_service_instance.is_ollama_running():
         with open("ai_debug.log", "a") as f:
             f.write(f"[{datetime.now()}] ERROR in query_ai: Ollama is not running\n")
