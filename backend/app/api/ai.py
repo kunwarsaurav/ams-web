@@ -114,13 +114,7 @@ def get_ai_alerts(db: Session = Depends(get_db)):
 
 @router.post("/draft-warning")
 async def draft_warning(request: DraftWarningRequest, db: Session = Depends(get_db)):
-    """Drafts an email warning using the AI."""
-    request.model = "qwen2.5:0.5b"
-    if not ai_service_instance.is_ollama_running():
-        with open("ai_debug.log", "a") as f:
-            f.write(f"[{datetime.now()}] ERROR in draft_warning: Ollama is not running\n")
-        raise HTTPException(status_code=503, detail="Ollama is not running.")
-        
+    """Drafts an email warning using a deterministic template for 100% reliability."""
     emp = db.query(Employee).filter(Employee.id == request.employee_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -128,18 +122,38 @@ async def draft_warning(request: DraftWarningRequest, db: Session = Depends(get_
     config = db.query(DeviceConfig).first()
     company_name = config.company_name if config else "Synthbit Technologies"
     
-    prompt = (
-        f"Write a complete, ready-to-send warning email to {emp.full_name} in the {emp.department} department. "
-        f"Reason: In the last 7 days, they had {request.lates} late arrivals and {request.absences} absences. "
-        f"Sender: HR Department at {company_name}. "
-        f"CRITICAL INSTRUCTIONS: "
-        f"1. DO NOT use any placeholders like [Name], [Date], or [Contact]. "
-        f"2. Use '{emp.full_name}' for the recipient name. "
-        f"3. Sign off exactly as 'HR Department, {company_name}'. "
-        f"4. Keep it concise, professional, and state that further infractions may lead to disciplinary action."
-    )
+    clean_name = emp.full_name.split('(')[0].strip().title()
     
+    issues = []
+    if request.lates > 0:
+        issues.append(f"{request.lates} late arrival{'s' if request.lates > 1 else ''}")
+    if request.absences > 0:
+        issues.append(f"{request.absences} full absence{'s' if request.absences > 1 else ''}")
+    issues_str = " and ".join(issues)
+    
+    # We use a deterministic template because tiny local LLMs (0.5b/1.5b) consistently hallucinate on strict HR formatting.
+    template = (
+        f"Subject: Official Attendance Warning\n\n"
+        f"Dear {clean_name},\n\n"
+        f"We are writing to officially address your recent attendance. According to our records over the last 7 days, "
+        f"you have had {issues_str}. This level of absenteeism is unacceptable and disrupts the team's workflow.\n\n"
+        f"Please consider this a formal warning. We expect immediate improvement in your attendance and punctuality. "
+        f"Be advised that any further infractions may lead to severe disciplinary action.\n\n"
+        f"Regards,\n"
+        f"HR Department, {company_name}"
+    )
+
+    async def stream_template():
+        # Stream it in small chunks to simulate AI typing for a smooth UX
+        import asyncio, json
+        chunk_size = 4
+        for i in range(0, len(template), chunk_size):
+            chunk = template[i:i+chunk_size]
+            yield json.dumps({"response": chunk, "done": False}) + "\n"
+            await asyncio.sleep(0.01)
+        yield json.dumps({"response": "", "done": True}) + "\n"
+        
     return StreamingResponse(
-        ai_service_instance.generate_response(prompt, request.model, is_draft=True),
+        stream_template(),
         media_type="application/x-ndjson"
     )
