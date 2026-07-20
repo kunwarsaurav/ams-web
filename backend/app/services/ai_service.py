@@ -147,7 +147,7 @@ class AIService:
                     emp_map[emp.id] = {
                         "name": emp.full_name,
                         "dept": emp.department,
-                        "role": emp.role
+                        "role": emp.designation
                     }
                 
                 for r in records:
