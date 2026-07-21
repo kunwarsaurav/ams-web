@@ -119,7 +119,7 @@ class AIService:
             logger.error(f"Error pulling model: {e}")
             yield json.dumps({"error": str(e)})
 
-    async def generate_response(self, prompt: str, model_name: str = "qwen2.5:0.5b", is_draft: bool = False) -> AsyncGenerator[str, None]:
+    async def generate_response(self, prompt: str, model_name: str = "qwen2.5:1.5b", is_draft: bool = False) -> AsyncGenerator[str, None]:
         """Generates a response from the model based on the prompt, streaming the result."""
         if not self.is_ollama_running():
             yield json.dumps({"error": "Ollama is not running.", "done": True}) + "\n"

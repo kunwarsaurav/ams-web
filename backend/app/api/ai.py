@@ -12,11 +12,11 @@ from app.models.config import DeviceConfig
 router = APIRouter()
 
 class PullRequest(BaseModel):
-    model: str = "qwen2.5:0.5b"
+    model: str = "qwen2.5:1.5b"
 
 class QueryRequest(BaseModel):
     prompt: str
-    model: str = "qwen2.5:0.5b"
+    model: str = "qwen2.5:1.5b"
 
 class DraftWarningRequest(BaseModel):
     employee_id: int
@@ -24,7 +24,7 @@ class DraftWarningRequest(BaseModel):
     absences: int
     start_date: str
     end_date: str
-    model: str = "qwen2.5:0.5b"
+    model: str = "qwen2.5:1.5b"
 
 @router.get("/status")
 def get_ai_status():

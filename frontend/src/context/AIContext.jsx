@@ -58,7 +58,7 @@ export function AIProvider({ children }) {
       const res = await fetch(`${API_BASE}/ai/setup/pull`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: 'qwen2.5:0.5b' })
+        body: JSON.stringify({ model: 'qwen2.5:1.5b' })
       });
       
       const reader = res.body.getReader();
