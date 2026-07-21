@@ -13,8 +13,12 @@ from sqlalchemy import text
 
 logger = logging.getLogger(__name__)
 
-OLLAMA_URL = "http://127.0.0.1:11434"
-OLLAMA_INSTALLER_URL = "https://ollama.com/download/OllamaSetup.exe"
+# Configurable via environment variable — set OLLAMA_URL on VPS if Ollama runs on a different host/port
+OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
+
+# Absolute log path so it survives git pulls and working directory changes
+AI_DEBUG_LOG = os.path.join(os.path.dirname(os.path.abspath(__file__)), "ai_debug.log")
+
 
 class AIService:
     def __init__(self):
