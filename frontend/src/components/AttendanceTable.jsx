@@ -130,7 +130,7 @@ export default function AttendanceTable() {
       )}
 
       {!loading && totalPages > 1 && (
-        <div className="pagination-controls" style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '20px' }}>
+        <div className="pagination-controls" style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '20px', flexWrap: 'wrap' }}>
           <button 
             disabled={currentPage === 1} 
             onClick={() => setCurrentPage(p => p - 1)}
