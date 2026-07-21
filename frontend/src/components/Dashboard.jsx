@@ -88,7 +88,7 @@ export default function Dashboard() {
           <h2 className="page-title">Dashboard</h2>
           <p className="page-subtitle">Overview of today's attendance metrics</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+        <div className="filters-row" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
             <Settings size={18} color="var(--text-secondary)" />
             {isEditingIp ? (

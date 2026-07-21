@@ -59,7 +59,7 @@ export default function AttendanceTable() {
           <h2 className="page-title">Attendance Logs</h2>
           <p className="page-subtitle">View and filter historical attendance data</p>
         </div>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-end' }}>
+        <div className="filters-row" style={{ display: 'flex', gap: '16px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div className="form-group" style={{ marginBottom: 0 }}>
             <label>Start Date</label>
             <input type="date" className="form-control" value={startDate} onChange={e => setStartDate(e.target.value)} />

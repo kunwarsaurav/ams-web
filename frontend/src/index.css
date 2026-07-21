@@ -676,6 +676,7 @@ tr:hover td {
     height: 100vh;
     transition: left 0.3s ease;
     z-index: 40;
+    overflow-y: auto;
   }
   
   .sidebar.open {
@@ -692,11 +693,43 @@ tr:hover td {
   
   .page-header {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 16px;
+  }
+  
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .filters-row {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+  
+  .filters-row .form-group {
+    width: 100%;
+  }
+
+  .table-container {
+    overflow-x: auto;
   }
   
   .dashboard-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .glass-panel {
+    margin: 16px;
+    padding: 24px !important;
+  }
+  
+  .ai-chat-container, .ai-container {
+    height: calc(100vh - 120px) !important;
+  }
+  
+  .card .btn-primary {
+    align-self: stretch !important;
+    justify-content: center;
   }
 }
