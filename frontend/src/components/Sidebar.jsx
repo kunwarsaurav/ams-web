@@ -46,7 +46,7 @@ export default function Sidebar({ onLogout, isOpen, onClose }) {
   return (
     <div className={`sidebar ${isOpen ? 'open' : ''}`}>
       <h1>Synthbit Technologies</h1>
-      <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <nav style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
         <NavLink to="/" onClick={onClose} className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
           <LayoutDashboard size={20} />
           Dashboard
@@ -86,8 +86,8 @@ export default function Sidebar({ onLogout, isOpen, onClose }) {
           Settings
         </NavLink>
       </nav>
-      <div style={{ marginTop: 'auto', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {isSettingsActive && (
+      {isSettingsActive && (
+        <div style={{ paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '12px', flexShrink: 0 }}>
           <button
             onClick={() => { setShowPasswordPrompt(true); setBackupPassword(''); setBackupError(''); }}
             style={{ width: '100%', padding: '10px 15px', background: '#e0e7ff', color: '#4f46e5', border: 'none', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '600', transition: 'background 0.2s' }}
@@ -95,17 +95,17 @@ export default function Sidebar({ onLogout, isOpen, onClose }) {
             <Download size={20} />
             Backup Database
           </button>
-        )}
-        <button
-          onClick={onLogout}
-          style={{ width: '100%', padding: '10px 15px', background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--surface-border)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '600', transition: 'all 0.2s' }}
-          onMouseOver={(e) => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.color = '#b91c1c'; }}
-          onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
-        >
-          <LogOut size={20} />
-          Logout
-        </button>
-      </div>
+          <button
+            onClick={onLogout}
+            style={{ width: '100%', padding: '10px 15px', background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--surface-border)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '10px', fontWeight: '600', transition: 'all 0.2s' }}
+            onMouseOver={(e) => { e.currentTarget.style.background = '#fee2e2'; e.currentTarget.style.color = '#b91c1c'; }}
+            onMouseOut={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-muted)'; }}
+          >
+            <LogOut size={20} />
+            Logout
+          </button>
+        </div>
+      )}
       
       {showPasswordPrompt && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>

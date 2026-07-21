@@ -9,7 +9,7 @@ export default function EmployeeList() {
   const [showModal, setShowModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingId, setEditingId] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     machine_user_id: '',
     full_name: '',
@@ -80,7 +80,7 @@ export default function EmployeeList() {
 
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this employee? This will also remove them from the machine.")) return;
-    
+
     try {
       await deleteEmployee(id);
       await fetchEmployees();

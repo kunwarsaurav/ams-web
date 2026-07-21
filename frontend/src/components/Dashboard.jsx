@@ -7,7 +7,7 @@ export default function Dashboard() {
   const [employees, setEmployees] = useState([]);
   const [todayRawLogs, setTodayRawLogs] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [deviceIp, setDeviceIp] = useState('10.10.10.10');
   const [isEditingIp, setIsEditingIp] = useState(false);
   const [savingIp, setSavingIp] = useState(false);
@@ -92,9 +92,9 @@ export default function Dashboard() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
             <Settings size={18} color="var(--text-secondary)" />
             {isEditingIp ? (
-              <input 
-                type="text" 
-                value={deviceIp} 
+              <input
+                type="text"
+                value={deviceIp}
                 onChange={(e) => setDeviceIp(e.target.value)}
                 style={{ width: '120px', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--primary)' }}
                 autoFocus
@@ -102,7 +102,7 @@ export default function Dashboard() {
             ) : (
               <span style={{ fontWeight: '500' }}>{deviceIp}</span>
             )}
-            
+
             {isEditingIp ? (
               <button className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveIp} disabled={savingIp}>
                 <Save size={16} />
@@ -139,7 +139,7 @@ export default function Dashboard() {
               <div className="value" style={{ color: 'var(--danger)' }}>{absentCount}</div>
             </div>
           </div>
-          
+
           <h3 style={{ marginBottom: '16px' }}>Recent Activity (Raw Punches)</h3>
           <div className="table-container">
             <table>
@@ -156,17 +156,17 @@ export default function Dashboard() {
                   .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
                   .slice(0, 10)
                   .map(log => (
-                  <tr key={log.id}>
-                    <td>{log.employee_name}</td>
-                    <td>{log.machine_user_id}</td>
-                    <td>{new Date(log.timestamp).toLocaleTimeString()}</td>
-                    <td>
-                      <span className="badge badge-present">
-                        Punch Received
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                    <tr key={log.id}>
+                      <td>{log.employee_name}</td>
+                      <td>{log.machine_user_id}</td>
+                      <td>{new Date(log.timestamp).toLocaleTimeString()}</td>
+                      <td>
+                        <span className="badge badge-present">
+                          Punch Received
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
                 {todayRawLogs.length === 0 && (
                   <tr>
                     <td colSpan="4" style={{ textAlign: 'center' }}>No punches recorded today</td>

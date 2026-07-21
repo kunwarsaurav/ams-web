@@ -34,6 +34,22 @@
   font-family: var(--font-main);
 }
 
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.3);
+}
+
 body {
   background: var(--bg-color);
   background-image: 
@@ -57,7 +73,8 @@ body {
 /* Layout */
 .app-layout {
   display: flex;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar {
@@ -682,7 +699,7 @@ tr:hover td {
     height: 100vh;
     transition: left 0.3s ease;
     z-index: 40;
-    overflow-y: auto;
+    overflow: hidden;
   }
   
   .sidebar.open {
