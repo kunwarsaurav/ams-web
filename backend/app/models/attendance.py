@@ -22,5 +22,6 @@ class DailyAttendance(Base):
     check_out = Column(DateTime, nullable=True)
     working_hours = Column(Float, default=0.0)
     status = Column(String) # Present, Absent, Half Day, etc.
+    is_late = Column(Integer, default=0) # 0 for false, 1 for true
 
     employee = relationship("Employee")

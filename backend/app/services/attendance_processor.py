@@ -77,11 +77,15 @@ class AttendanceProcessor:
                     existing.working_hours = 0.0
                 
                 existing.status = "Present"
+                # Mark as late if check-in is after 10:15 AM
+                existing.is_late = 1 if (check_in.hour > 10 or (check_in.hour == 10 and check_in.minute > 15)) else 0
             else:
                 existing.check_in = None
                 existing.check_out = None
                 existing.working_hours = 0.0
                 existing.status = "Absent"
+                existing.is_late = 0
 
         self.db.commit()
+
 

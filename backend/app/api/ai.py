@@ -12,11 +12,11 @@ from app.models.config import DeviceConfig
 router = APIRouter()
 
 class PullRequest(BaseModel):
-    model: str = "qwen2.5:1.5b"
+    model: str = "llama3.1:8b"
 
 class QueryRequest(BaseModel):
     prompt: str
-    model: str = "qwen2.5:1.5b"
+    model: str = "llama3.1:8b"
 
 class DraftWarningRequest(BaseModel):
     employee_id: int
@@ -24,7 +24,7 @@ class DraftWarningRequest(BaseModel):
     absences: int
     start_date: str
     end_date: str
-    model: str = "qwen2.5:1.5b"
+    model: str = "llama3.1:8b"
 
 @router.get("/status")
 def get_ai_status():
@@ -67,7 +67,7 @@ async def pull_model(request: PullRequest):
 @router.post("/query")
 async def query_ai(request: QueryRequest):
     """Queries the AI and streams the generated response."""
-    request.model = "qwen2.5:1.5b"
+    request.model = "llama3.1:8b"
     if not ai_service_instance.is_ollama_running():
         with open("ai_debug.log", "a") as f:
             f.write(f"[{datetime.now()}] ERROR in query_ai: Ollama is not running\n")

@@ -53,7 +53,7 @@ export default function AIAlerts() {
           absences: emp.absences,
           start_date: dateRange.start,
           end_date: dateRange.end,
-          model: 'qwen2.5:1.5b'
+          model: 'llama3.1:8b'
         })
       });
 
