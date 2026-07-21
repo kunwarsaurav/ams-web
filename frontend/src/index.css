@@ -151,6 +151,12 @@ body {
   margin-bottom: 32px;
 }
 
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
 /* Typography */
 .page-title {
   font-size: 32px;
@@ -716,6 +722,10 @@ tr:hover td {
   }
   
   .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .settings-grid {
     grid-template-columns: 1fr;
   }
   

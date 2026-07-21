@@ -92,7 +92,7 @@ export default function Settings() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '32px' }}>
+      <div className="settings-grid">
         
         {/* Profile Card */}
         <div className="card" style={{ height: 'fit-content' }}>
