@@ -134,69 +134,75 @@ class AIService:
         if not is_draft:
             # Build context from the database
             db = SessionLocal()
-            context_str = "Recent Attendance Data (Last 7 Days):\n"
+            context_str = "ATTENDANCE DATA SUMMARY:\n"
             try:
-                # Only fetch the last 7 days to prevent context window overflow with many employees
                 recent_date = datetime.now().date() - timedelta(days=7)
-                # Cap at 250 records max (approx 6,500 tokens) to guarantee it fits in an 8K context window
-                records = db.query(DailyAttendance).filter(DailyAttendance.date >= recent_date).order_by(DailyAttendance.date.desc()).limit(250).all()
+                records = db.query(DailyAttendance).filter(DailyAttendance.date >= recent_date).order_by(DailyAttendance.date.desc()).limit(1000).all()
                 
-                # Group by employee for a cleaner prompt
-                emp_map = {}
-                for emp in db.query(Employee).all():
-                    emp_map[emp.id] = {
-                        "name": emp.full_name,
-                        "dept": emp.department,
-                        "role": emp.designation
-                    }
+                emp_map = {emp.id: emp.full_name for emp in db.query(Employee).all()}
                 
+                # Group by date
+                grouped_by_date = {}
                 for r in records:
-                    emp_info = emp_map.get(r.employee_id, {"name": "Unknown", "dept": "Unknown", "role": "Unknown"})
-                    name = emp_info["name"]
-                    dept = emp_info["dept"]
-                    role = emp_info["role"]
-                    
                     date_str = r.date.strftime("%Y-%m-%d") if r.date else "Unknown"
-                    status = r.status
-                    check_in = r.check_in.strftime("%H:%M") if r.check_in else "None"
-                    check_out = r.check_out.strftime("%H:%M") if r.check_out else "None"
-                    hours = round(r.working_hours, 1) if r.working_hours else 0.0
+                    name = emp_map.get(r.employee_id, "Unknown")
                     
-                    # Pre-calculate flags so the tiny AI model doesn't have to do the math
-                    flags = []
+                    if date_str not in grouped_by_date:
+                        grouped_by_date[date_str] = {
+                            "ABSENT": [],
+                            "LATE": [],
+                            "MISSED_CHECKOUT": [],
+                            "OVERTIME": [],
+                            "NORMAL": []
+                        }
+                    
                     if r.status == "Absent":
-                        flags.append("ABSENT")
-                    if r.check_in and r.check_in.strftime("%H:%M") > "10:15":
-                        flags.append("LATE")
-                    if r.status == "Present" and r.check_in and not r.check_out:
-                        flags.append("MISSED_CHECKOUT")
-                    if hours > 8.0:
-                        flags.append("OVERTIME")
+                        grouped_by_date[date_str]["ABSENT"].append(name)
+                    else:
+                        is_normal = True
+                        if r.check_in and r.check_in.strftime("%H:%M") > "10:15":
+                            grouped_by_date[date_str]["LATE"].append(name)
+                            is_normal = False
+                        if r.status == "Present" and r.check_in and not r.check_out:
+                            grouped_by_date[date_str]["MISSED_CHECKOUT"].append(name)
+                            is_normal = False
+                        if r.working_hours and r.working_hours > 8.0:
+                            grouped_by_date[date_str]["OVERTIME"].append(name)
+                            is_normal = False
+                            
+                        if is_normal:
+                            grouped_by_date[date_str]["NORMAL"].append(name)
+                
+                # Build context string
+                for d, categories in grouped_by_date.items():
+                    context_str += f"\n--- DATE: {d} ---\n"
+                    if categories["ABSENT"]:
+                        context_str += f"ABSENT EMPLOYEES: {', '.join(categories['ABSENT'])}\n"
+                    if categories["LATE"]:
+                        context_str += f"LATE EMPLOYEES: {', '.join(categories['LATE'])}\n"
+                    if categories["MISSED_CHECKOUT"]:
+                        context_str += f"EMPLOYEES WHO MISSED CHECKOUT: {', '.join(categories['MISSED_CHECKOUT'])}\n"
+                    if categories["OVERTIME"]:
+                        context_str += f"EMPLOYEES WITH OVERTIME: {', '.join(categories['OVERTIME'])}\n"
+                    if not any([categories["ABSENT"], categories["LATE"], categories["MISSED_CHECKOUT"], categories["OVERTIME"]]):
+                        context_str += "All employees were normal on this day.\n"
                         
-                    flags_str = f"[{', '.join(flags)}]" if flags else "[ON TIME/NORMAL]"
-                    
-                    context_str += f"- {name} ({role} in {dept}) on {date_str}: {status} {flags_str}, IN: {check_in}, OUT: {check_out}, Hours: {hours}h\n"
             except Exception as e:
                 logger.error(f"Failed to fetch DB context: {e}")
-                context_str += "(Failed to load database records)\n"
+                context_str += "Error loading data.\n"
             finally:
                 db.close()
             
             system_prompt = (
-                "You are SYNTHBIT AI 1.0, a highly intelligent, proactive AI assistant for an Attendance Management System developed by Synthbit Technologies. "
-                "CRITICAL IDENTITY INSTRUCTION: If asked about your identity, what model you are, who created you, or anything related to AI models, you MUST reply that you are SYNTHBIT AI 1.0 developed by Synthbit Technologies. Never mention Gemma, Llama, OpenAI, Anthropic, Google, or any other underlying model architecture. "
-                "You help managers understand attendance data. Always be concise, accurate, and highly analytical.\n\n"
-                "CRITICAL RULES FOR ANSWERING:\n"
-                "1. DO NOT guess or calculate who is late, who missed checkout, or who is absent. I have already calculated this for you in the context provided.\n"
-                "2. Simply look at the flags next to the employee's name. The flags will say [LATE], [ABSENT], [MISSED_CHECKOUT], [OVERTIME], or [ON TIME/NORMAL].\n"
-                "3. If a user asks 'who is late', ONLY list employees who have the [LATE] flag.\n"
-                "4. Be brief. List the names clearly."
+                "You are SYNTHBIT AI 1.0, developed by Synthbit Technologies.\n"
+                "CRITICAL RULES:\n"
+                "1. Answer ONLY based on the ATTENDANCE DATA SUMMARY provided below.\n"
+                "2. The data is grouped by DATE, and explicitly lists the names of employees who were ABSENT, LATE, etc.\n"
+                "3. If a user asks 'who is absent', simply read the names from the 'ABSENT EMPLOYEES' list for the requested date.\n"
+                "4. Be very concise. Use bullet points. Do not invent data."
             )
             
-            enriched_prompt = (
-                f"Given the following database context, please answer the user's question directly and intelligently based ONLY on the flags provided next to each record.\n\n"
-                f"{context_str}\n\nUser Question: {prompt}"
-            )
+            enriched_prompt = f"{context_str}\n\nUser Question: {prompt}"
         else:
             system_prompt = "You are an AI that writes complete emails exactly as instructed. You never use placeholders."
         
