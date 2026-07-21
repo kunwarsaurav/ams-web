@@ -346,20 +346,32 @@ class AIService:
 
                 # ── CHECK-IN / CHECK-OUT for a person ────────────────────────
                 elif "check" in p_lower and (target_name or "saurav" in p_lower or "employee" in p_lower):
-                    # Try to extract name more broadly
+                    # Try to extract name more broadly if regex didn't catch it
                     if not target_name:
-                        name_broad = re.search(r"(?:employee(?:\s+\d+|\s+name)?|named?|for)\s+([\w\s\(\)]+?)(?:\s+check|\s+on\s|$|\?)", p_lower)
+                        name_broad = re.search(
+                            r"(?:employee(?:\s+name)?|named?|for|the)\s+([\w\s\(\)]+?)(?:\s+check|\s+on\s|$|\?)",
+                            p_lower
+                        )
                         target_name = name_broad.group(1).strip() if name_broad else None
+
                     if target_name:
+                        # Word-boundary LIKE: "employee 3" should NOT match "employee 30"
+                        # Use: LIKE 'name %' OR LIKE 'name(%' OR = 'name'
+                        t = target_name.lower()
+                        name_filter = (
+                            f"(lower(e.full_name) = '{t}' "
+                            f"OR lower(e.full_name) LIKE '{t} %' "
+                            f"OR lower(e.full_name) LIKE '{t}(%')"
+                        )
                         generated_sql = (
                             f"SELECT e.full_name, e.department, e.designation, "
                             f"time(da.check_in) as check_in_time, time(da.check_out) as check_out_time, "
                             f"da.status, da.is_late, round(da.working_hours, 2) as working_hours "
                             f"FROM employees e JOIN daily_attendance da ON e.id = da.employee_id "
-                            f"WHERE e.full_name LIKE '%{target_name}%' AND da.date = '{target_date}'"
+                            f"WHERE {name_filter} AND da.date = '{target_date}'"
                         )
                         sql_context_label = f"Attendance for '{target_name}' on {target_date}"
-                        query_mode = "list"
+                        query_mode = "summary"   # LLM phrases it naturally, not as a raw list
 
                 # ── SUMMARY / REPORT ──────────────────────────────────────────
                 elif "summary" in p_lower or "report" in p_lower:

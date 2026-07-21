@@ -182,3 +182,27 @@ WHERE da.date = '2026-07-19' AND da.status = 'Absent'
 [2026-07-21 17:20:56.772221] INTENT: Full attendance for 2026-07-21 | MODE: list
 [2026-07-21 17:20:56.772225] SQL: SELECT e.full_name, da.status, da.is_late, time(da.check_in) as check_in_time FROM employees e JOIN daily_attendance da ON e.id = da.employee_id WHERE da.date = '2026-07-21' ORDER BY da.status, e.full_name
 [2026-07-21 17:20:56.773126] RESULTS LENGTH: 49
+[2026-07-21 17:32:44.745291] PROMPT: What time did Employee 3 check in on 19th july?
+[2026-07-21 17:32:44.745314] INTENT: Attendance for 'employee 3' on 2026-07-19 | MODE: list
+[2026-07-21 17:32:44.745323] SQL: SELECT e.full_name, e.department, e.designation, time(da.check_in) as check_in_time, time(da.check_out) as check_out_time, da.status, da.is_late, round(da.working_hours, 2) as working_hours FROM employees e JOIN daily_attendance da ON e.id = da.employee_id WHERE e.full_name LIKE '%employee 3%' AND da.date = '2026-07-19'
+[2026-07-21 17:32:44.749790] RESULTS LENGTH: 1451
+[2026-07-21 17:34:51.151452] PROMPT: What time did Employee 3 check in on 19th july?
+[2026-07-21 17:34:51.151467] INTENT: Attendance for 'employee 3' on 2026-07-19 | MODE: list
+[2026-07-21 17:34:51.151471] SQL: SELECT e.full_name, e.department, e.designation, time(da.check_in) as check_in_time, time(da.check_out) as check_out_time, da.status, da.is_late, round(da.working_hours, 2) as working_hours FROM employees e JOIN daily_attendance da ON e.id = da.employee_id WHERE e.full_name LIKE '%employee 3%' AND da.date = '2026-07-19'
+[2026-07-21 17:34:51.152764] RESULTS LENGTH: 1451
+[2026-07-21 17:35:05.272898] PROMPT: What time did Employee 3 check in on 19th july?
+[2026-07-21 17:35:05.272920] INTENT: Attendance for 'employee 3' on 2026-07-19 | MODE: summary
+[2026-07-21 17:35:05.272928] SQL: SELECT e.full_name, e.department, e.designation, time(da.check_in) as check_in_time, time(da.check_out) as check_out_time, da.status, da.is_late, round(da.working_hours, 2) as working_hours FROM employees e JOIN daily_attendance da ON e.id = da.employee_id WHERE (lower(e.full_name) = 'employee 3' OR lower(e.full_name) LIKE 'employee 3 %' OR lower(e.full_name) LIKE 'employee 3(%') AND da.date = '2026-07-19'
+[2026-07-21 17:35:05.275119] RESULTS LENGTH: 203
+[2026-07-21 17:35:23.369605] PROMPT: Who are the frequent absentees?
+[2026-07-21 17:35:23.369627] INTENT: Frequent absentees (2026-06-21 to 2026-07-21) | MODE: list
+[2026-07-21 17:35:23.369632] SQL: SELECT e.full_name, COUNT(*) as absent_days FROM employees e JOIN daily_attendance da ON e.id = da.employee_id WHERE da.date BETWEEN '2026-06-21' AND '2026-07-21' AND da.status = 'Absent' GROUP BY e.id HAVING absent_days >= 2 ORDER BY absent_days DESC LIMIT 20
+[2026-07-21 17:35:23.383308] RESULTS LENGTH: 989
+[2026-07-21 17:35:50.659337] PROMPT: Give me info about Employee 3 (Night Shift)
+[2026-07-21 17:35:50.659349] INTENT: Employee profile: employee 3 (night shift) | MODE: summary
+[2026-07-21 17:35:50.659354] SQL: SELECT e.full_name, e.department, e.designation, e.status, e.machine_user_id, COUNT(CASE WHEN da.status='Present' THEN 1 END) as days_present, COUNT(CASE WHEN da.status='Absent' THEN 1 END) as days_absent, COUNT(CASE WHEN da.is_late=1 THEN 1 END) as days_late, round(AVG(CASE WHEN da.working_hours>0 THEN da.working_hours END), 2) as avg_hours FROM employees e LEFT JOIN daily_attendance da ON e.id = da.employee_id WHERE e.full_name LIKE '%employee 3 (night shift)%' GROUP BY e.id
+[2026-07-21 17:35:50.671139] RESULTS LENGTH: 235
+[2026-07-21 17:36:04.440477] PROMPT: Which department is most punctual?
+[2026-07-21 17:36:04.440493] INTENT: Department punctuality (2026-06-21 to 2026-07-21) | MODE: summary
+[2026-07-21 17:36:04.440498] SQL: SELECT e.department, COUNT(CASE WHEN da.status='Present' THEN 1 END) as present_days, COUNT(CASE WHEN da.is_late=1 THEN 1 END) as late_days, round(100.0 * COUNT(CASE WHEN da.is_late=1 THEN 1 END) / MAX(1, COUNT(CASE WHEN da.status='Present' THEN 1 END)), 1) as late_pct FROM employees e JOIN daily_attendance da ON e.id = da.employee_id WHERE da.date BETWEEN '2026-06-21' AND '2026-07-21' GROUP BY e.department ORDER BY late_pct ASC
+[2026-07-21 17:36:04.443021] RESULTS LENGTH: 638
