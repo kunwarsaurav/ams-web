@@ -71,9 +71,9 @@ export default function Login() {
             <label>Username</label>
             <div style={{ position: 'relative' }}>
               <User size={18} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-muted)' }} />
-              <input 
-                type="text" 
-                className="form-control" 
+              <input
+                type="text"
+                className="form-control"
                 style={{ paddingLeft: '40px' }}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -86,9 +86,9 @@ export default function Login() {
             <label>Password</label>
             <div style={{ position: 'relative' }}>
               <Lock size={18} style={{ position: 'absolute', left: '12px', top: '14px', color: 'var(--text-muted)' }} />
-              <input 
-                type="password" 
-                className="form-control" 
+              <input
+                type="password"
+                className="form-control"
                 style={{ paddingLeft: '40px' }}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

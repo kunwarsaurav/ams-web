@@ -1,10 +1,13 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
-from app.database.database import engine, Base, db_path
+from sqlalchemy.orm import Session
+from app.database.database import engine, Base, db_path, get_db
 from app.api import employees, attendance, device, ai, auth
 from app.models import config # To ensure it's registered
+from app.models.config import DeviceConfig
 from app.websocket_manager import manager
+from pydantic import BaseModel
 from app.services.ai_service import ai_service_instance
 from contextlib import asynccontextmanager
 import sqlite3
@@ -79,8 +82,14 @@ async def websocket_endpoint(websocket: WebSocket):
 def read_root():
     return {"message": "Welcome to the Attendance Management System API"}
 
-@app.get("/database/backup")
-def backup_database():
+class BackupRequest(BaseModel):
+    password: str
+
+@app.post("/database/backup")
+def backup_database(request: BackupRequest, db: Session = Depends(get_db)):
+    device_config = db.query(DeviceConfig).first()
+    if not device_config or request.password != device_config.admin_password:
+        raise HTTPException(status_code=401, detail="Invalid password")
     return FileResponse(path=db_path, filename="ams_backup.db", media_type="application/octet-stream")
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import EmployeeList from './components/EmployeeList';
@@ -14,6 +15,7 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 
 function AppContent() {
   const { isAuthenticated, logout } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     wsManager.connect();
@@ -26,7 +28,22 @@ function AppContent() {
   return (
     <Router>
       <div className="app-layout">
-        <Sidebar onLogout={logout} />
+        {/* Mobile Header */}
+        <div className="mobile-header">
+          <h2>Attendance</h2>
+          <button onClick={() => setSidebarOpen(!sidebarOpen)} className="btn-icon">
+            {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
+          </button>
+        </div>
+
+        {/* Sidebar Overlay for mobile */}
+        <div 
+          className={`sidebar-overlay ${sidebarOpen ? 'open' : ''}`} 
+          onClick={() => setSidebarOpen(false)} 
+        />
+
+        <Sidebar onLogout={logout} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        
         <main className="main-content">
           <Routes>
             <Route path="/" element={<Dashboard />} />
