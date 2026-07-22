@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
 from typing import List
 from datetime import date, datetime
@@ -86,7 +86,7 @@ def get_employee_attendance(emp_id: int, db: Session = Depends(get_db)):
     return db.query(DailyAttendanceModel).filter(DailyAttendanceModel.employee_id == emp_id).all()
 
 @router.get("/export")
-def export_attendance_excel(start_date: date, end_date: date, db: Session = Depends(get_db)):
+def export_attendance_excel(start_date: date, end_date: date, x_client_id: str = Header(default="saurav"), db: Session = Depends(get_db)):
     records = db.query(DailyAttendanceModel).filter(
         DailyAttendanceModel.date >= start_date,
         DailyAttendanceModel.date <= end_date
@@ -109,7 +109,7 @@ def export_attendance_excel(start_date: date, end_date: date, db: Session = Depe
         })
         
     df = pd.DataFrame(data)
-    file_path = "attendance_export.xlsx"
+    file_path = f"{x_client_id}_attendance_export.xlsx"
     df.to_excel(file_path, index=False)
     
     return FileResponse(path=file_path, filename=file_path, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')

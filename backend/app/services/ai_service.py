@@ -6,10 +6,10 @@ import logging
 import asyncio
 from typing import Optional, AsyncGenerator
 from datetime import datetime, timedelta
-from app.database.database import SessionLocal
 from app.models.employee import Employee
 from app.models.attendance import DailyAttendance
 from sqlalchemy import text
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -124,7 +124,7 @@ class AIService:
             logger.error(f"Error pulling model: {e}")
             yield json.dumps({"error": str(e)})
 
-    async def generate_response(self, prompt: str, model_name: str = "llama3.1:8b", is_draft: bool = False) -> AsyncGenerator[str, None]:
+    async def generate_response(self, prompt: str, db: Session, model_name: str = "llama3.1:8b", is_draft: bool = False) -> AsyncGenerator[str, None]:
         """Generates a response from the model based on the prompt, streaming the result."""
         if not self.is_ollama_running():
             yield json.dumps({"error": "Ollama is not running.", "done": True}) + "\n"
@@ -423,7 +423,6 @@ class AIService:
             sql_results = ""
             if requires_db and generated_sql:
                 yield json.dumps({"response": "*(Analyzing database for your query...)*\n\n"}) + "\n"
-                db = SessionLocal()
                 try:
                     with open("ai_debug.log", "a") as f:
                         f.write(f"[{datetime.now()}] PROMPT: {prompt}\n")
@@ -462,8 +461,6 @@ class AIService:
                     query_mode  = "summary"
                     with open("ai_debug.log", "a") as f:
                         f.write(f"[{datetime.now()}] DB EXCEPTION: {str(e)}\n")
-                finally:
-                    db.close()
 
             # --- STEP 5: RESPOND ---
             # MODE A: list  → Python streams directly, LLM never called (no truncation possible)

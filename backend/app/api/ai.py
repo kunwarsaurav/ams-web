@@ -65,7 +65,7 @@ async def pull_model(request: PullRequest):
     )
 
 @router.post("/query")
-async def query_ai(request: QueryRequest):
+async def query_ai(request: QueryRequest, db: Session = Depends(get_db)):
     """Queries the AI and streams the generated response."""
     request.model = "llama3.1:8b"
     if not ai_service_instance.is_ollama_running():
@@ -74,7 +74,7 @@ async def query_ai(request: QueryRequest):
         raise HTTPException(status_code=503, detail="Ollama is not running.")
         
     return StreamingResponse(
-        ai_service_instance.generate_response(request.prompt, request.model),
+        ai_service_instance.generate_response(request.prompt, db, request.model),
         media_type="application/x-ndjson"
     )
 
