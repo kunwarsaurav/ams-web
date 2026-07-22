@@ -1,11 +1,28 @@
 import axios from 'axios';
 
 const baseURL = import.meta.env.VITE_API_URL || `http://${window.location.hostname || '127.0.0.1'}:8080`;
+
+export const getClientId = () => {
+    const hostname = window.location.hostname;
+    
+    // Check if it's an IP address (e.g., 127.0.0.1 or 40.81.245.157)
+    const isIp = /^[0-9.]+$/.test(hostname);
+    
+    if (isIp || hostname === 'localhost') {
+        return 'saurav'; // Default fallback
+    }
+    
+    // E.g. "school_a.localhost" -> "school_a"
+    // "school_b.ams.com" -> "school_b"
+    return hostname.split('.')[0];
+};
+
 const api = axios.create({
     baseURL: baseURL,
     withCredentials: true, // Send cookies automatically
     headers: {
         'Content-Type': 'application/json',
+        'X-Client-ID': getClientId(),
     },
 });
 

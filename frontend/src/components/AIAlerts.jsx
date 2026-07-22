@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getAIAlerts } from '../services/api';
+import { getAIAlerts, getClientId } from '../services/api';
 import { BellRing, Send, Bot, Mail, CheckCircle } from 'lucide-react';
 import { useAI } from '../context/AIContext';
 import ReactMarkdown from 'react-markdown';
@@ -46,7 +46,7 @@ export default function AIAlerts() {
       const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname || '127.0.0.1'}:8080`;
       const response = await fetch(`${baseUrl}/ai/draft-warning`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Client-ID': getClientId() },
         body: JSON.stringify({
           employee_id: emp.employee_id,
           lates: emp.lates,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Send, Download, Loader2, Sparkles, AlertCircle } from 'lucide-react';
 import { useAI } from '../context/AIContext';
+import { getClientId } from '../services/api';
 
 const API_BASE = import.meta.env.VITE_API_URL || `http://${window.location.hostname || '127.0.0.1'}:8080`;
 
@@ -28,7 +29,7 @@ export default function AIAssistant() {
     try {
       const res = await fetch(`${API_BASE}/ai/query`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Client-ID': getClientId() },
         body: JSON.stringify({ prompt: userMessage.content, model: status.model || 'llama3.1:8b' })
       });
 

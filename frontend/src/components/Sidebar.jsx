@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Users, CalendarDays, Download, Settings as SettingsIcon, LogOut, Bot, Loader2, BellRing } from 'lucide-react';
 import { useAI } from '../context/AIContext';
+import { getClientId } from '../services/api';
 
 export default function Sidebar({ onLogout, isOpen, onClose }) {
   const { status } = useAI();
@@ -17,7 +18,7 @@ export default function Sidebar({ onLogout, isOpen, onClose }) {
       const baseUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname || '127.0.0.1'}:8080`;
       const response = await fetch(`${baseUrl}/database/backup`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Client-ID': getClientId() },
         body: JSON.stringify({ password: backupPassword })
       });
       

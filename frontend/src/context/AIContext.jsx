@@ -1,4 +1,5 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
+import { getClientId } from '../services/api';
 
 export const AIContext = createContext();
 
@@ -10,7 +11,7 @@ export function AIProvider({ children }) {
 
   const checkStatus = async () => {
     try {
-      const res = await fetch(`${API_BASE}/ai/status`);
+      const res = await fetch(`${API_BASE}/ai/status`, { headers: { 'X-Client-ID': getClientId() } });
       const data = await res.json();
       
       if (!data.installed) {
@@ -35,10 +36,10 @@ export function AIProvider({ children }) {
   const installOllama = async () => {
     setStatus({ state: 'installing' });
     try {
-      await fetch(`${API_BASE}/ai/setup/install`, { method: 'POST' });
+      await fetch(`${API_BASE}/ai/setup/install`, { method: 'POST', headers: { 'X-Client-ID': getClientId() } });
       const pollInstall = setInterval(async () => {
         try {
-          const res = await fetch(`${API_BASE}/ai/status`);
+          const res = await fetch(`${API_BASE}/ai/status`, { headers: { 'X-Client-ID': getClientId() } });
           const data = await res.json();
           if (data.installed && data.running) {
             clearInterval(pollInstall);
@@ -57,7 +58,7 @@ export function AIProvider({ children }) {
     try {
       const res = await fetch(`${API_BASE}/ai/setup/pull`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Client-ID': getClientId() },
         body: JSON.stringify({ model: 'llama3.1:8b' })
       });
       
