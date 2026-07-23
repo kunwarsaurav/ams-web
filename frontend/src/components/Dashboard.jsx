@@ -8,21 +8,15 @@ export default function Dashboard() {
   const [todayRawLogs, setTodayRawLogs] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [deviceIp, setDeviceIp] = useState('10.10.10.10');
-  const [isEditingIp, setIsEditingIp] = useState(false);
-  const [savingIp, setSavingIp] = useState(false);
-
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [empRes, logsRes, settingsRes] = await Promise.all([
+      const [empRes, logsRes] = await Promise.all([
         getEmployees(),
-        getTodayRawLogs(),
-        getDeviceSettings()
+        getTodayRawLogs()
       ]);
       setEmployees(empRes.data);
       setTodayRawLogs(logsRes.data);
-      setDeviceIp(settingsRes.data.ip_address || '10.10.10.10');
     } catch (error) {
       console.error("Error fetching dashboard data", error);
     }
@@ -52,16 +46,7 @@ export default function Dashboard() {
     };
   }, []);
 
-  const handleSaveIp = async () => {
-    setSavingIp(true);
-    try {
-      await updateDeviceSettings({ ip_address: deviceIp });
-      setIsEditingIp(false);
-    } catch (error) {
-      console.error("Failed to save IP", error);
-    }
-    setSavingIp(false);
-  };
+
 
   const handleDeleteToday = async () => {
     if (!window.confirm("Are you sure you want to delete all raw punches and attendance records for today? This cannot be undone.")) {
@@ -89,32 +74,7 @@ export default function Dashboard() {
           <p className="page-subtitle">Overview of today's attendance metrics</p>
         </div>
         <div className="filters-row" style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--surface)', padding: '8px 12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-            <Settings size={18} color="var(--text-secondary)" />
-            {isEditingIp ? (
-              <input
-                type="text"
-                value={deviceIp}
-                onChange={(e) => setDeviceIp(e.target.value)}
-                style={{ width: '120px', padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--primary)' }}
-                autoFocus
-              />
-            ) : (
-              <span style={{ fontWeight: '500' }}>{deviceIp}</span>
-            )}
-
-            {isEditingIp ? (
-              <button className="btn btn-primary" style={{ padding: '4px 8px' }} onClick={handleSaveIp} disabled={savingIp}>
-                <Save size={16} />
-              </button>
-            ) : (
-              <button className="btn btn-secondary" style={{ padding: '4px 8px' }} onClick={() => setIsEditingIp(true)}>
-                Edit IP
-              </button>
-            )}
-          </div>
-
-          <button className="btn btn-danger" onClick={handleDeleteToday} disabled={isEditingIp}>
+          <button className="btn btn-danger" onClick={handleDeleteToday}>
             <Trash2 size={18} />
             Delete Today's Logs
           </button>

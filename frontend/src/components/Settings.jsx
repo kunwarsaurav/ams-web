@@ -16,14 +16,12 @@ export default function Settings() {
 
   const [companyName, setCompanyName] = useState('');
   const [hrEmail, setHrEmail] = useState('');
-  const [ipAddress, setIpAddress] = useState(''); // Keep existing IP config
   const [deviceId, setDeviceId] = useState(''); // Device Serial Number
 
   React.useEffect(() => {
     getDeviceSettings().then(res => {
       setCompanyName(res.data.company_name || 'Synthbit Technologies');
       setHrEmail(res.data.hr_email || 'hr@synthbit.com');
-      setIpAddress(res.data.ip_address || '10.10.10.10');
       setDeviceId(res.data.device_id || '');
     }).catch(err => console.error(err));
   }, []);
@@ -34,7 +32,6 @@ export default function Settings() {
       await updateDeviceSettings({
         company_name: companyName,
         hr_email: hrEmail,
-        ip_address: ipAddress,
         device_id: deviceId
       });
       setProfileMessage('Company Profile saved successfully!');
@@ -67,7 +64,6 @@ export default function Settings() {
       await updateDeviceSettings({
         company_name: companyName,
         hr_email: hrEmail,
-        ip_address: ipAddress,
         device_id: deviceId,
         admin_password: newPassword
       });
