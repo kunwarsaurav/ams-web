@@ -1,10 +1,11 @@
 import sys
 import os
-from app.database.database import MasterSessionLocal, app_data_dir, get_client_engine
-from app.models.client import Client
+from app.database.database import MasterSessionLocal, app_data_dir, get_client_engine, master_engine
+from app.models.client import Client, MasterBase
 from app.main import check_and_migrate_db
 
 def add_client(client_id: str, name: str):
+    MasterBase.metadata.create_all(bind=master_engine)
     db = MasterSessionLocal()
     try:
         existing = db.query(Client).filter(Client.id == client_id).first()
@@ -29,6 +30,7 @@ def add_client(client_id: str, name: str):
         db.close()
 
 def list_clients():
+    MasterBase.metadata.create_all(bind=master_engine)
     db = MasterSessionLocal()
     try:
         clients = db.query(Client).all()
@@ -44,6 +46,7 @@ def list_clients():
         db.close()
 
 def deactivate_client(client_id: str):
+    MasterBase.metadata.create_all(bind=master_engine)
     db = MasterSessionLocal()
     try:
         client = db.query(Client).filter(Client.id == client_id).first()
