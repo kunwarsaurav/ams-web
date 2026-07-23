@@ -84,7 +84,7 @@ app.add_middleware(
         "http://40.81.245.157:8000",  # VPS Frontend on port 8000!
         "http://40.81.245.157:8080"   # Direct backend
     ],
-    allow_origin_regex=r"^https?://(.*\.)?(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origin_regex=r"^https?://(.*\.)?(localhost|127\.0\.0\.1|40\.81\.245\.157|nip\.io)(:\d+)?$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
