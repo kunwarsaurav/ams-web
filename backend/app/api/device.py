@@ -159,11 +159,6 @@ async def handle_device_webhook(request: Request):
     try:
         text_body = body.decode('utf-8', errors='ignore')
         
-        # Log to file for debugging
-        with open("webhook_debug.log", "a", encoding="utf-8") as f:
-            f.write(f"\n--- NEW WEBHOOK ---\nEvent: {request_code}\nBody: {text_body}\n")
-            
-        
         # Robust JSON extraction (these devices often pad with binary data before/after the JSON)
         start_idx = text_body.find('{"')
         if start_idx == -1:
