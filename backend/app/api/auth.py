@@ -27,7 +27,7 @@ def login(request: LoginRequest, response: Response, db: Session = Depends(get_d
 
     # Generate session token
     token = secrets.token_hex(32)
-    expires = datetime.now(timezone.utc) + timedelta(days=7)
+    expires = datetime.now(timezone.utc) + timedelta(days=1)
 
     # Store in DB
     session = AdminSession(session_token=token, expires_at=expires)
@@ -39,7 +39,7 @@ def login(request: LoginRequest, response: Response, db: Session = Depends(get_d
         key="session_token",
         value=token,
         httponly=True,
-        max_age=7 * 24 * 60 * 60,  # 7 days in seconds
+        max_age=1 * 24 * 60 * 60,  # 1 days in seconds
         path="/",
         samesite="lax",
         secure=False  # Set to True in production with HTTPS
