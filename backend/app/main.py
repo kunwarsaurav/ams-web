@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, Header
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, Header, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
@@ -89,6 +89,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def device_request_logger(request: Request, call_next):
+    # Log incoming requests, ignoring websocket or documentation paths to reduce noise
+    if not request.url.path.startswith(("/ws", "/docs", "/openapi.json")):
+        print(f"\n--- INCOMING REQUEST ---")
+        print(f"Method: {request.method}")
+        print(f"URL: {request.url}")
+        print(f"Query Params: {request.query_params}")
+        # Uncomment the line below if you also want to see all the HTTP headers the device sends
+        # print(f"Headers: {request.headers}") 
+        print(f"------------------------\n")
+    
+    response = await call_next(request)
+    return response
 
 app.include_router(employees.router)
 app.include_router(attendance.router)

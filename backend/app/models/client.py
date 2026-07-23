@@ -12,3 +12,10 @@ class Client(MasterBase):
     db_filename = Column(String)                      # e.g., 'saurav.db'
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+class DeviceMapping(MasterBase):
+    __tablename__ = "device_mappings"
+
+    dev_id = Column(String, primary_key=True, index=True) # e.g. C26188C41B251635
+    client_id = Column(String, index=True)                # e.g. saurav
+    created_at = Column(DateTime, default=datetime.utcnow)

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, KeyRound, CheckCircle2, Building, Mail, Save } from 'lucide-react';
+import { User, KeyRound, CheckCircle2, Building, Mail, Save, Fingerprint } from 'lucide-react';
 import { getDeviceSettings, updateDeviceSettings } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,12 +17,14 @@ export default function Settings() {
   const [companyName, setCompanyName] = useState('');
   const [hrEmail, setHrEmail] = useState('');
   const [ipAddress, setIpAddress] = useState(''); // Keep existing IP config
+  const [deviceId, setDeviceId] = useState(''); // Device Serial Number
 
   React.useEffect(() => {
     getDeviceSettings().then(res => {
       setCompanyName(res.data.company_name || 'Synthbit Technologies');
       setHrEmail(res.data.hr_email || 'hr@synthbit.com');
       setIpAddress(res.data.ip_address || '10.10.10.10');
+      setDeviceId(res.data.device_id || '');
     }).catch(err => console.error(err));
   }, []);
 
@@ -32,7 +34,8 @@ export default function Settings() {
       await updateDeviceSettings({
         company_name: companyName,
         hr_email: hrEmail,
-        ip_address: ipAddress
+        ip_address: ipAddress,
+        device_id: deviceId
       });
       setProfileMessage('Company Profile saved successfully!');
       setTimeout(() => setProfileMessage(''), 3000);
@@ -65,6 +68,7 @@ export default function Settings() {
         company_name: companyName,
         hr_email: hrEmail,
         ip_address: ipAddress,
+        device_id: deviceId,
         admin_password: newPassword
       });
       
@@ -228,6 +232,23 @@ export default function Settings() {
                     required
                   />
                 </div>
+              </div>
+              <div className="form-group" style={{ marginBottom: '24px' }}>
+                <label>Device Serial Number (dev_id)</label>
+                <div style={{ position: 'relative' }}>
+                  <Fingerprint size={16} color="var(--text-muted)" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
+                  <input 
+                    type="text" 
+                    className="form-control"
+                    style={{ paddingLeft: '40px' }}
+                    value={deviceId}
+                    onChange={(e) => setDeviceId(e.target.value)}
+                    placeholder="E.g. C26188C41B251635"
+                  />
+                </div>
+                <small style={{ color: 'var(--text-muted)', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                  Required to link your physical attendance device to this workspace.
+                </small>
               </div>
               <button type="submit" className="btn btn-primary" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                 <Save size={16} /> Save Profile

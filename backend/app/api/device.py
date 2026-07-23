@@ -10,31 +10,45 @@ from app.database.database import get_db
 from app.models.employee import Employee
 from app.models.attendance import AttendanceLog
 from app.models.config import DeviceConfig
+from app.models.client import DeviceMapping, Client
+from app.database.database import MasterSessionLocal, get_client_engine
+from sqlalchemy.orm import sessionmaker
 from app.services.attendance_processor import AttendanceProcessor
 from app.websocket_manager import manager
+from fastapi import Header
 
 router = APIRouter(tags=["Device"])
 
 @router.get("/device/settings")
-def get_device_settings(db: Session = Depends(get_db)):
+def get_device_settings(x_client_id: str = Header(default="saurav"), db: Session = Depends(get_db)):
     config = db.query(DeviceConfig).first()
     if not config:
         config = DeviceConfig(ip_address="10.10.10.10")
         db.add(config)
         db.commit()
+        
+    master_db = MasterSessionLocal()
+    try:
+        mapping = master_db.query(DeviceMapping).filter(DeviceMapping.client_id == x_client_id).first()
+        device_id = mapping.dev_id if mapping else ""
+    finally:
+        master_db.close()
+        
     return {
         "ip_address": config.ip_address,
         "company_name": config.company_name,
-        "hr_email": config.hr_email
+        "hr_email": config.hr_email,
+        "device_id": device_id
     }
 
 @router.post("/device/settings")
-async def update_device_settings(request: Request, db: Session = Depends(get_db)):
+async def update_device_settings(request: Request, x_client_id: str = Header(default="saurav"), db: Session = Depends(get_db)):
     data = await request.json()
     new_ip = data.get("ip_address")
     company_name = data.get("company_name", "Synthbit Technologies")
     hr_email = data.get("hr_email", "hr@synthbit.com")
     admin_password = data.get("admin_password")
+    device_id = data.get("device_id")
     
     if not new_ip:
         return JSONResponse(status_code=400, content={"message": "ip_address is required"})
@@ -52,11 +66,26 @@ async def update_device_settings(request: Request, db: Session = Depends(get_db)
         if admin_password:
             config.admin_password = admin_password
     db.commit()
+    
+    if device_id:
+        master_db = MasterSessionLocal()
+        try:
+            # Clear old mappings
+            master_db.query(DeviceMapping).filter(DeviceMapping.client_id == x_client_id).delete()
+            master_db.query(DeviceMapping).filter(DeviceMapping.dev_id == device_id).delete()
+            
+            new_mapping = DeviceMapping(dev_id=device_id, client_id=x_client_id)
+            master_db.add(new_mapping)
+            master_db.commit()
+        finally:
+            master_db.close()
+            
     return {
         "message": "Device settings updated", 
         "ip_address": new_ip,
         "company_name": company_name,
-        "hr_email": hr_email
+        "hr_email": hr_email,
+        "device_id": device_id
     }
 
 @router.get("/device/ping")
@@ -87,7 +116,7 @@ async def ignore_hikvision_webhook():
     return JSONResponse(status_code=200, content={"status": "ignored"})
 
 @router.post("/")
-async def handle_device_webhook(request: Request, db: Session = Depends(get_db)):
+async def handle_device_webhook(request: Request):
     body = await request.body()
     try:
         data = json.loads(body.decode("utf-8"))
@@ -99,9 +128,30 @@ async def handle_device_webhook(request: Request, db: Session = Depends(get_db))
     dev_id = request.headers.get("dev_id") or data.get("dev_id")
     trans_id = request.headers.get("trans_id") or data.get("trans_id")
     
+    if not dev_id:
+        return JSONResponse(status_code=400, content={"ReturnCode": "-1", "error": "Device ID (dev_id) not provided"})
+
+    # Map device to tenant database
+    master_db = MasterSessionLocal()
+    mapping = master_db.query(DeviceMapping).filter(DeviceMapping.dev_id == dev_id).first()
+    if not mapping:
+        master_db.close()
+        return JSONResponse(status_code=400, content={"ReturnCode": "-1", "error": "Device not registered to any workspace"})
+        
+    client = master_db.query(Client).filter(Client.id == mapping.client_id).first()
+    master_db.close()
+    
+    if not client or not client.is_active:
+        return JSONResponse(status_code=400, content={"ReturnCode": "-1", "error": "Workspace inactive or not found"})
+        
+    engine = get_client_engine(client.db_filename)
+    ClientSession = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    db = ClientSession()
+    
     print("=" * 50)
     print(f"WEBHOOK RECEIVED FROM DEVICE: {dev_id}")
     print(f"Event Type: {request_code}")
+    print(f"Target Workspace: {client.id} ({client.name})")
     print(f"Query Params: {request.query_params}")
     print(f"Request Headers: {dict(request.headers)}")
     print(f"Raw Bytes Body: {repr(body)}")
@@ -324,6 +374,9 @@ async def handle_device_webhook(request: Request, db: Session = Depends(get_db))
                 
     except Exception as e:
         print(f"Error processing webhook: {e}")
+        
+    finally:
+        db.close()
         
     print("=" * 50)
     

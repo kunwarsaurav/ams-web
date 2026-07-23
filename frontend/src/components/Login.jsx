@@ -13,7 +13,11 @@ export default function Login() {
     try {
       await login(username, password);
     } catch (err) {
-      setError('Invalid username or password');
+      if (err.message === 'Network Error' || !err.response) {
+        setError('Network Error: Unable to connect to the server');
+      } else {
+        setError('Invalid username or password');
+      }
     }
   };
 
