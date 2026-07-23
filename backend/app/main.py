@@ -96,15 +96,15 @@ app.include_router(device.router)
 app.include_router(ai.router, prefix="/ai", tags=["AI"])
 app.include_router(auth.router, prefix="/auth", tags=["Auth"])
 
-@app.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await manager.connect(websocket)
+@app.websocket("/ws/{client_id}")
+async def websocket_endpoint(websocket: WebSocket, client_id: str):
+    await manager.connect(websocket, client_id)
     try:
         while True:
             # We don't really expect client to send messages right now, but we keep it open
             data = await websocket.receive_text()
     except WebSocketDisconnect:
-        manager.disconnect(websocket)
+        manager.disconnect(websocket, client_id)
 
 @app.get("/")
 def read_root():

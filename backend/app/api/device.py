@@ -227,11 +227,11 @@ async def handle_device_webhook(request: Request):
                             "employee_name": emp_name,
                             "timestamp": formatted_device_time
                         }
-                    })
+                    }, client.id)
                     await manager.broadcast({
                         "type": "NEW_EMPLOYEE",
                         "data": {}
-                    })
+                    }, client.id)
             elif request_code == "realtime_enroll_data":
                 user_id = data.get("user_id")
                 user_name = data.get("user_name", f"Unknown User ({user_id})")
@@ -262,7 +262,7 @@ async def handle_device_webhook(request: Request):
                                 "full_name": new_emp.full_name,
                                 "department": new_emp.department
                             }
-                        })
+                        }, client.id)
                     else:
                         # Update the name if it was previously Unknown/Fetching, OR if it was deleted
                         updated = False
@@ -293,7 +293,7 @@ async def handle_device_webhook(request: Request):
                                         "full_name": existing_emp.full_name,
                                         "department": existing_emp.department
                                     }
-                                })
+                                }, client.id)
                         else:
                             current_server_time = datetime.now().strftime("%I:%M:%S %p")
                             print(f"[{current_server_time}] Employee already exists: {existing_emp.full_name} (ID: {user_id})")

@@ -1,9 +1,12 @@
+import { getClientId } from './api';
+
 class WebSocketManager {
   constructor() {
     this.ws = null;
     this.listeners = {};
     const host = window.location.hostname || '127.0.0.1';
-    this.url = `ws://${host}:8080/ws`;
+    const clientId = getClientId();
+    this.url = `ws://${host}:8080/ws/${clientId}`;
     this.reconnectTimeout = 3000;
   }
 
